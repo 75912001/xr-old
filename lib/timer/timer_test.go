@@ -1,27 +1,29 @@
 package timer
 
 import (
+	"math/rand"
+
 	//"fmt"
 	"testing"
 	"time"
 )
 
+/*
+ go test -v -count=1
+*/
 var allCnt int64 = 10000000 //1000w
 var iChan chan int64 = make(chan int64, allCnt)
 var eachCnt int64 = 100000 //每次处理多少个打印一次日志 10w
 
 func cb(data interface{}) int {
 	cb_cnt := data.(int64)
-//	if 0 == cb_cnt%eachCnt {
-//		fmt.Println(cb_cnt)
-//	}
 	iChan <- cb_cnt
 	return 0
 }
 
-func TestTimerSecond2(t *testing.T) {
+func TestTimerSecond(t *testing.T) {
 	var tm TimerMgr
-	second := time.Now().Unix()
+
 	var c chan interface{} = make(chan interface{}, allCnt)
 	tm.Start(100, c)
 
@@ -39,13 +41,16 @@ func TestTimerSecond2(t *testing.T) {
 		}
 	}()
 
+	second := time.Now().Unix()
 	for i := int64(1); i <= allCnt; i++ {
-		tm.AddSecond(cb, i, second)
+		tm.AddSecond(cb, i, second+rand.Int63n(10))
 	}
 
 	for i := int64(1); i <= allCnt; i++ {
 		<-iChan
 	}
+	tm.Exit()
+	close(c)
 }
 
 func addCB(data interface{}) int {
@@ -53,16 +58,16 @@ func addCB(data interface{}) int {
 	n := time.Now()
 	second := n.Unix()
 	for i := int64(1); i <= allCnt; i++ {
-		t := tm.AddSecond(cb, i, second)
+		t := tm.AddSecond(cb, i, second+rand.Int63n(10))
 		if i%2 == 0 {
 			tm.DelSecond(t)
-			tm.AddSecond(cb, i, second + 10)
+			tm.AddSecond(cb, i, second+rand.Int63n(10))
 		}
 	}
 	return 0
 }
 
-func TestTimerSecond3(t *testing.T) {
+func TestTimerSecondAddCBDelCB(t *testing.T) {
 	var tm TimerMgr
 	second := time.Now().Unix()
 	var c chan interface{} = make(chan interface{}, allCnt)
@@ -82,7 +87,7 @@ func TestTimerSecond3(t *testing.T) {
 		}
 	}()
 
-	t1 := tm.AddSecond(addCB, &tm, second+10)
+	t1 := tm.AddSecond(addCB, &tm, second)
 	tm.DelSecond(t1)
 	tm.AddSecond(addCB, &tm, second)
 
@@ -90,29 +95,22 @@ func TestTimerSecond3(t *testing.T) {
 		<-iChan
 	}
 	tm.Exit()
+	close(c)
 }
 
 func cb2(data interface{}) int {
 	cb_cnt := data.(int64)
-
-	//if 0 == cb_cnt%eachCnt {
-	//	fmt.Println(cb_cnt)
-	//}
 	iChan <- cb_cnt
 	return 0
 }
 func addCB2(data interface{}) int {
 	tm := data.(*TimerMgr)
 	n := time.Now()
-//	second := n.Unix()
 	millisecond := n.UnixNano() / 1000000
-//	fmt.Println("begin:", second)
 	for i := int64(1); i <= allCnt; i++ {
 		tm.AddMillisecond(cb2, i, millisecond)
 	}
-	//n = time.Now()
-//	second = n.Unix()
-//	fmt.Println("end:", second)
+
 	return 0
 }
 func TestTimerMillisecond(t *testing.T) {
@@ -139,5 +137,6 @@ func TestTimerMillisecond(t *testing.T) {
 	for i := int64(1); i <= allCnt; i++ {
 		<-iChan
 	}
+	tm.Exit()
+	close(c)
 }
-

@@ -1,0 +1,8 @@
+
+.idea/modules.xml
+.idea/vcs.xml
+.idea/watcherTasks.xml
+.idea/workspace.xml
+.idea/xr.iml
+lib/.DS_Store
+lib/main.go
