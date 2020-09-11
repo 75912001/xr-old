@@ -2,6 +2,7 @@ package timer
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -12,9 +13,9 @@ type TimerMgr struct {
 	secondVec        [eTimerVecSize]*tvecRoot //秒,数据
 	millisecondList  *list.List               //毫秒,数据
 	timerOutChan     chan<- interface{}       //超时的*TimerSecond/*TimerMillisecond都会放入其中
-	exit             bool                     //退出(true:退出,该管理器退出)
 	secondMutex      sync.Mutex
 	milliSecondMutex sync.Mutex
+	cancelFunc       context.CancelFunc
 }
 
 //OnTimerFun 回调定时器函数(使用协程回调)
@@ -30,35 +31,42 @@ func (p *TimerMgr) Start(millisecond int64, timerOutChan chan<- interface{}) {
 	p.millisecondList = list.New()
 	p.timerOutChan = timerOutChan
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	p.cancelFunc = cancelFunc
 	//每秒更新
-	go func() {
-		for !p.exit{
-			time.Sleep(time.Second)
-
-			p.secondMutex.Lock()
-
-			p.scanSecond()
-
-			p.secondMutex.Unlock()
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("timer second goroutine done.")
+				return
+			case <-time.After(time.Second):
+				time.Sleep(time.Second)
+				p.secondMutex.Lock()
+				p.scanSecond()
+				p.secondMutex.Unlock()
+			}
 		}
-		fmt.Println("second timer go fun exit")
-	}()
+	}(ctx)
+
 	//每millisecond个毫秒更新
-	go func() {
-		for !p.exit{
-			time.Sleep(time.Duration(millisecond) * time.Millisecond)
-
-			p.milliSecondMutex.Lock()
-
-			p.scanMillisecond()
-
-			p.milliSecondMutex.Unlock()
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("timer millisecond goroutine done.")
+				return
+			case <-time.After(time.Duration(millisecond) * time.Millisecond):
+				p.milliSecondMutex.Lock()
+				p.scanMillisecond()
+				p.milliSecondMutex.Unlock()
+			}
 		}
-	}()
+	}(ctx)
 }
 
 func (p *TimerMgr) Exit() {
-	p.exit = true
+	p.cancelFunc()
 }
 
 //AddSecond 添加秒级定时器
@@ -68,7 +76,7 @@ func (p *TimerMgr) AddSecond(cb OnTimerFun, arg interface{}, expire int64) (t *T
 		p.secondMutex.Unlock()
 	}()
 
-	return p.addSecond(cb, arg, expire, nil)
+	return p.addSecond(cb, arg, expire)
 }
 
 //DelSecond 删除秒级定时器

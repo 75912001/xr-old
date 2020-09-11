@@ -11,22 +11,33 @@ type TimerSecond struct {
 	TimerMillisecond
 }
 
-func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64, oldTimerSecond *TimerSecond) (t *TimerSecond) {
+func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64) (t *TimerSecond) {
 	tvecRootIdx := p.findTvecRootIdx(expire)
-	if nil == oldTimerSecond {
-		oldTimerSecond = &TimerSecond{
-			TimerMillisecond{
-				expire,
-				arg,
-				cb,
-				true,
-			},
-		}
-	} else {
-		oldTimerSecond.expire = expire
-		oldTimerSecond.Arg = arg
-		oldTimerSecond.Function = cb
+
+	t = &TimerSecond{
+		TimerMillisecond{
+			expire,
+			arg,
+			cb,
+			true,
+		},
 	}
+
+	p.secondVec[tvecRootIdx].data.PushBack(t)
+
+	if expire < p.secondVec[tvecRootIdx].minExpire {
+		p.secondVec[tvecRootIdx].minExpire = expire
+	}
+
+	return
+}
+
+func (p *TimerMgr) updateSecond(cb OnTimerFun, arg interface{}, expire int64, oldTimerSecond *TimerSecond, tvecRootIdx int) (t *TimerSecond) {
+	//tvecRootIdx = p.findTvecRootIdx(expire)
+
+	oldTimerSecond.expire = expire
+	oldTimerSecond.Arg = arg
+	oldTimerSecond.Function = cb
 
 	p.secondVec[tvecRootIdx].data.PushBack(oldTimerSecond)
 
@@ -83,7 +94,7 @@ func (p *TimerMgr) scanSecond() {
 				if idx != newIdx {
 					next = e.Next()
 					tr.data.Remove(e)
-					p.addSecond(t.Function, t.Arg, t.expire, t)
+					p.updateSecond(t.Function, t.Arg, t.expire, t, newIdx)
 				} else {
 					if t.expire < tr.minExpire {
 						tr.minExpire = t.expire
