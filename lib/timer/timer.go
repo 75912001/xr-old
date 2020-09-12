@@ -23,7 +23,7 @@ type OnTimerFun func(data interface{}) int
 
 //Start millisecond:毫秒间隔(如50,则每50毫秒扫描一次毫秒定时器)
 //timerOutChan 是超时事件放置的channel,由外部传入
-func (p *TimerMgr) Start(millisecond int64, timerOutChan chan<- interface{}) {
+func (p *TimerMgr) Start(ctx context.Context, millisecond int64, timerOutChan chan<- interface{}) {
 	for idx := range p.secondVec {
 		p.secondVec[idx] = &tvecRoot{}
 		p.secondVec[idx].init()
@@ -31,7 +31,7 @@ func (p *TimerMgr) Start(millisecond int64, timerOutChan chan<- interface{}) {
 	p.millisecondList = list.New()
 	p.timerOutChan = timerOutChan
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctxWithCancel, cancelFunc := context.WithCancel(ctx)
 	p.cancelFunc = cancelFunc
 	//每秒更新
 	go func(ctx context.Context) {
@@ -47,7 +47,7 @@ func (p *TimerMgr) Start(millisecond int64, timerOutChan chan<- interface{}) {
 				p.secondMutex.Unlock()
 			}
 		}
-	}(ctx)
+	}(ctxWithCancel)
 
 	//每millisecond个毫秒更新
 	go func(ctx context.Context) {
@@ -62,7 +62,7 @@ func (p *TimerMgr) Start(millisecond int64, timerOutChan chan<- interface{}) {
 				p.milliSecondMutex.Unlock()
 			}
 		}
-	}(ctx)
+	}(ctxWithCancel)
 }
 
 func (p *TimerMgr) Exit() {

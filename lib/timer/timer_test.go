@@ -1,6 +1,7 @@
 package timer
 
 import (
+	"context"
 	"math/rand"
 
 	//"fmt"
@@ -25,7 +26,7 @@ func TestTimerSecond(t *testing.T) {
 	var tm TimerMgr
 
 	var c chan interface{} = make(chan interface{}, allCnt)
-	tm.Start(100, c)
+	tm.Start(context.Background(), 100, c)
 
 	var outChan <-chan interface{}
 	outChan = c
@@ -51,6 +52,7 @@ func TestTimerSecond(t *testing.T) {
 	}
 	tm.Exit()
 	close(c)
+	time.Sleep(time.Second)
 }
 
 func addCB(data interface{}) int {
@@ -71,7 +73,7 @@ func TestTimerSecondAddCBDelCB(t *testing.T) {
 	var tm TimerMgr
 	second := time.Now().Unix()
 	var c chan interface{} = make(chan interface{}, allCnt)
-	tm.Start(100, c)
+	tm.Start(context.Background(), 100, c)
 
 	var outChan <-chan interface{}
 	outChan = c
@@ -96,6 +98,7 @@ func TestTimerSecondAddCBDelCB(t *testing.T) {
 	}
 	tm.Exit()
 	close(c)
+	time.Sleep(time.Second)
 }
 
 func cb2(data interface{}) int {
@@ -120,7 +123,7 @@ func TestTimerMillisecond(t *testing.T) {
 
 	var c chan interface{} = make(chan interface{}, allCnt)
 
-	tm.Start(100, c)
+	tm.Start(context.Background(), 100, c)
 
 	tm.AddMillisecond(addCB2, &tm, millisecond)
 	go func() {
@@ -139,4 +142,5 @@ func TestTimerMillisecond(t *testing.T) {
 	}
 	tm.Exit()
 	close(c)
+	time.Sleep(time.Second)
 }
