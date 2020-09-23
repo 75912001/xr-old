@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-//TimerSecond 秒级定时器
+// TimerSecond 秒级定时器
 type TimerSecond struct {
 	TimerMillisecond
 }
@@ -48,7 +48,7 @@ func (p *TimerMgr) updateSecond(cb OnTimerFun, arg interface{}, expire int64, ol
 	return
 }
 
-//扫描秒级定时器
+// 扫描秒级定时器
 func (p *TimerMgr) scanSecond() {
 	second := time.Now().Unix()
 

@@ -5,15 +5,15 @@ import (
 	"time"
 )
 
-//TimerMillisecond 毫秒级定时器
+// TimerMillisecond 毫秒级定时器
 type TimerMillisecond struct {
 	expire   int64 //过期时间戳
-	Arg     interface{}
+	Arg      interface{}
 	Function OnTimerFun //超时调用的函数
 	valid    bool       //有效(false:不执行,扫描时自动删除)
 }
 
-//扫描毫秒级定时器
+// 扫描毫秒级定时器
 func (p *TimerMgr) scanMillisecond() {
 	t := time.Now()
 	millisecond := t.UnixNano() / 1000000
