@@ -15,6 +15,8 @@ import (
 	"github.com/75912001/xr/lib/util"
 )
 
+var GLog *Log
+
 // Log 日志
 type Log struct {
 	level      int      //日志等级
