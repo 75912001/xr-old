@@ -16,10 +16,10 @@ func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64) (t *T
 
 	t = &TimerSecond{
 		TimerMillisecond{
-			expire,
-			arg,
-			cb,
-			true,
+			Arg:      arg,
+			Function: cb,
+			expire:   expire,
+			valid:    true,
 		},
 	}
 
@@ -32,20 +32,13 @@ func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64) (t *T
 	return
 }
 
-func (p *TimerMgr) updateSecond(cb OnTimerFun, arg interface{}, expire int64, oldTimerSecond *TimerSecond, tvecRootIdx int) (t *TimerSecond) {
-	//tvecRootIdx = p.findTvecRootIdx(expire)
+// 换挡,秒级定时器. 将定时器,添加到轮转IDX中.
+func (p *TimerMgr) shiftTvecRoot(timerSecond *TimerSecond, tvecRootIdx int) {
+	p.secondVec[tvecRootIdx].data.PushBack(timerSecond)
 
-	oldTimerSecond.expire = expire
-	oldTimerSecond.Arg = arg
-	oldTimerSecond.Function = cb
-
-	p.secondVec[tvecRootIdx].data.PushBack(oldTimerSecond)
-
-	if expire < p.secondVec[tvecRootIdx].minExpire {
-		p.secondVec[tvecRootIdx].minExpire = expire
+	if timerSecond.expire < p.secondVec[tvecRootIdx].minExpire {
+		p.secondVec[tvecRootIdx].minExpire = timerSecond.expire
 	}
-	t = oldTimerSecond
-	return
 }
 
 // 扫描秒级定时器
@@ -94,7 +87,7 @@ func (p *TimerMgr) scanSecond() {
 				if idx != newIdx {
 					next = e.Next()
 					tr.data.Remove(e)
-					p.updateSecond(t.Function, t.Arg, t.expire, t, newIdx)
+					p.shiftTvecRoot(t, newIdx)
 				} else {
 					if t.expire < tr.minExpire {
 						tr.minExpire = t.expire

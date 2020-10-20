@@ -41,7 +41,6 @@ func (p *TimerMgr) Start(ctx context.Context, millisecond int64, timerOutChan ch
 				fmt.Println("timer second goroutine done.")
 				return
 			case <-time.After(time.Second):
-				time.Sleep(time.Second)
 				p.secondMutex.Lock()
 				p.scanSecond()
 				p.secondMutex.Unlock()
@@ -69,7 +68,7 @@ func (p *TimerMgr) Exit() {
 	p.cancelFunc()
 }
 
-//AddSecond 添加秒级定时器
+// AddSecond 添加秒级定时器
 func (p *TimerMgr) AddSecond(cb OnTimerFun, arg interface{}, expire int64) (t *TimerSecond) {
 	p.secondMutex.Lock()
 	defer func() {
@@ -79,7 +78,7 @@ func (p *TimerMgr) AddSecond(cb OnTimerFun, arg interface{}, expire int64) (t *T
 	return p.addSecond(cb, arg, expire)
 }
 
-//DelSecond 删除秒级定时器
+// DelSecond 删除秒级定时器
 func (p *TimerMgr) DelSecond(t *TimerSecond) {
 	t.valid = false
 }
@@ -87,10 +86,10 @@ func (p *TimerMgr) DelSecond(t *TimerSecond) {
 //AddMillisecond 添加毫秒级定时器
 func (p *TimerMgr) AddMillisecond(cb OnTimerFun, arg interface{}, expireMillisecond int64) (t *TimerMillisecond) {
 	t = &TimerMillisecond{
-		expireMillisecond,
-		arg,
-		cb,
-		true,
+		Arg:      arg,
+		Function: cb,
+		expire:   expireMillisecond,
+		valid:    true,
 	}
 
 	p.milliSecondMutex.Lock()

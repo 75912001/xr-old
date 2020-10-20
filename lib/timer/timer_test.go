@@ -2,6 +2,7 @@ package timer
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 
 	//"fmt"
@@ -19,6 +20,7 @@ var eachCnt int64 = 100000 //每次处理多少个打印一次日志 10w
 func cb(data interface{}) int {
 	cb_cnt := data.(int64)
 	iChan <- cb_cnt
+	//fmt.Printf("%v\n", cb_cnt)
 	return 0
 }
 
@@ -40,6 +42,7 @@ func TestTimerSecond(t *testing.T) {
 				}
 			}
 		}
+		fmt.Printf("TestTimerSecond goroutine done.")
 	}()
 
 	second := time.Now().Unix()

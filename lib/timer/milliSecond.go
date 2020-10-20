@@ -7,10 +7,11 @@ import (
 
 // TimerMillisecond 毫秒级定时器
 type TimerMillisecond struct {
-	expire   int64 //过期时间戳
-	Arg      interface{}
-	Function OnTimerFun //超时调用的函数
-	valid    bool       //有效(false:不执行,扫描时自动删除)
+	Arg      interface{} //参数
+	Function OnTimerFun  //超时调用的函数
+
+	expire int64 //过期时间戳
+	valid  bool  //有效(false:不执行,扫描时自动删除)
 }
 
 // 扫描毫秒级定时器
