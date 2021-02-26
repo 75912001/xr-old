@@ -15,12 +15,12 @@ const (
 )
 
 var (
-	strEmerg  string = "emerg"
-	strCrit   string = "crit"
-	strError  string = "error"
-	strWarn   string = "warn"
-	strNotice string = "ntice"
-	strInfo   string = "info"
-	strDebug  string = "debug"
-	strTrace  string = "trace"
+	strEmerg  string = "EME"
+	strCrit   string = "CRI"
+	strError  string = "ERR"
+	strWarn   string = "WAR"
+	strNotice string = "NOT"
+	strInfo   string = "INF"
+	strDebug  string = "GDB"
+	strTrace  string = "TRA"
 )

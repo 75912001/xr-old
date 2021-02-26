@@ -36,7 +36,7 @@ type Log struct {
 func (p *Log) Init(namePrefix string) (err error) {
 	p.perm = os.ModePerm
 	p.fileFlag = os.O_CREATE | os.O_APPEND | os.O_RDWR
-	p.logFlag = log.Ltime //log.Ldate|log.Llongfile
+	p.logFlag = log.Lmicroseconds //log.Ldate|log.Llongfile
 	p.level = levelOn
 	p.namePrefix = namePrefix
 	p.yyyymmdd = util.GenYYYYMMDD(time.Now().Unix())
