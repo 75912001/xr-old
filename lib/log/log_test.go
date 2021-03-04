@@ -25,7 +25,7 @@ L3 缓存：	6 MB
 100W 7.721s=>129516次/s=>130次/ms
 */
 func TestLog(t *testing.T) {
-	cnt := 1000000
+	cnt := 1000000 //100W次
 	var log *Log = new(Log)
 	log.Init("test_log")
 
