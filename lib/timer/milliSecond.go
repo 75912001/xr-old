@@ -5,13 +5,19 @@ import (
 	"time"
 )
 
-// TimerMillisecond 毫秒级定时器
-type TimerMillisecond struct {
+// Millisecond 毫秒级定时器
+type Millisecond struct {
 	Arg      interface{} //参数
 	Function OnTimerFun  //超时调用的函数
+	expire   int64       //过期时间戳
+	valid    bool        //有效(false:不执行,扫描时自动删除)
+}
 
-	expire int64 //过期时间戳
-	valid  bool  //有效(false:不执行,扫描时自动删除)
+// 设为无效
+func (p *Millisecond) inValid() {
+	p.Arg = nil
+	p.Function = nil
+	p.valid = false
 }
 
 // 扫描毫秒级定时器
@@ -21,7 +27,7 @@ func (p *TimerMgr) scanMillisecond() {
 
 	var next *list.Element
 	for e := p.millisecondList.Front(); e != nil; e = next {
-		timerMillisecond := e.Value.(*TimerMillisecond)
+		timerMillisecond := e.Value.(*Millisecond)
 		if !timerMillisecond.valid {
 			next = e.Next()
 			p.millisecondList.Remove(e)

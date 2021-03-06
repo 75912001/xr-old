@@ -6,34 +6,28 @@ import (
 	"time"
 )
 
-// TimerSecond 秒级定时器
-type TimerSecond struct {
-	TimerMillisecond
+// Second 秒级定时器
+type Second struct {
+	Millisecond
 }
 
-func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64) (t *TimerSecond) {
-	tvecRootIdx := p.findTvecRootIdx(expire)
+func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64) (t *Second) {
+	tvecRootIdx := findTvecRootIdx(expire)
 
-	t = &TimerSecond{
-		TimerMillisecond{
+	t = &Second{
+		Millisecond{
 			Arg:      arg,
 			Function: cb,
 			expire:   expire,
 			valid:    true,
 		},
 	}
-
-	p.secondVec[tvecRootIdx].data.PushBack(t)
-
-	if expire < p.secondVec[tvecRootIdx].minExpire {
-		p.secondVec[tvecRootIdx].minExpire = expire
-	}
-
+	p.pushBackTvecRoot(t, tvecRootIdx)
 	return
 }
 
-// 换挡,秒级定时器. 将定时器,添加到轮转IDX中.
-func (p *TimerMgr) shiftTvecRoot(timerSecond *TimerSecond, tvecRootIdx int) {
+// 将秒级定时器,添加到轮转IDX的末尾.
+func (p *TimerMgr) pushBackTvecRoot(timerSecond *Second, tvecRootIdx int) {
 	p.secondVec[tvecRootIdx].data.PushBack(timerSecond)
 
 	if timerSecond.expire < p.secondVec[tvecRootIdx].minExpire {
@@ -52,7 +46,7 @@ func (p *TimerMgr) scanSecond() {
 		//更新最小过期时间戳
 		tr0.minExpire = math.MaxInt64
 		for e := tr0.data.Front(); nil != e; e = next {
-			t := e.Value.(*TimerSecond)
+			t := e.Value.(*Second)
 			if !t.valid {
 				next = e.Next()
 				tr0.data.Remove(e)
@@ -77,17 +71,17 @@ func (p *TimerMgr) scanSecond() {
 		if (tr.minExpire - second) <= gTvecRootDuration[idx-1] {
 			tr.minExpire = math.MaxInt64
 			for e := tr.data.Front(); e != nil; e = next {
-				t := e.Value.(*TimerSecond)
+				t := e.Value.(*Second)
 				if !t.valid {
 					next = e.Next()
 					tr.data.Remove(e)
 					continue
 				}
-				newIdx := p.findPrevTvecRootIdx(t.expire-second, idx)
+				newIdx := findPrevTvecRootIdx(t.expire-second, idx)
 				if idx != newIdx {
 					next = e.Next()
 					tr.data.Remove(e)
-					p.shiftTvecRoot(t, newIdx)
+					p.pushBackTvecRoot(t, newIdx)
 				} else {
 					if t.expire < tr.minExpire {
 						tr.minExpire = t.expire

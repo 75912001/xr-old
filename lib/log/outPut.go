@@ -19,7 +19,7 @@ func (p *Log) onOutPut() {
 	defer func() {
 		p.waitGroup.Done()
 		if err := recover(); err != nil {
-			fmt.Printf("%s\n", err)
+			fmt.Printf("log onOutPut goroutine recover:%s\n", err)
 		}
 	}()
 	for v := range p.logChan {
@@ -42,7 +42,7 @@ func (p *Log) outPut(calldepth int, prefix *string, str *string) {
 	}
 	funName := runtime.FuncForPC(pc).Name()
 	var strLine = strconv.Itoa(line)
-	p.logChan <- logData{
+	p.logChan <- &logData{
 		yyyymmdd: genYYYYMMDD(time.Now().Unix()),
 		data:     "[" + *prefix + "][" + funName + "][" + strLine + "]" + *str,
 	}

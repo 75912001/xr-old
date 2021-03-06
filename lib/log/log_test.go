@@ -24,13 +24,18 @@ L3 缓存：	6 MB
 ////////////////////////////////////////////////////////////////////////////////
 100W 7.721s=>129516次/s=>130次/ms
 */
-func TestLog(t *testing.T) {
-	cnt := 1000000 //100W次
+func TestExample(t *testing.T) {
 	var log *Log = new(Log)
 	log.Init("test_log")
 
-	for i := 1; i <= cnt; i++ {
-		log.Emerg("debug")
-	}
+	log.Trace("trace")
+	log.Debug("debug")
+	log.Info("info")
+	log.Notice("notice")
+	log.Warn("warn")
+	log.Error("error")
+	log.Crit("crit")
+	log.Emerg("emerg")
+
 	log.Exit()
 }

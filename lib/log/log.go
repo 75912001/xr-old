@@ -18,7 +18,7 @@ type Log struct {
 	level      int      //日志等级
 	file       *os.File //日志文件
 	logger     *log.Logger
-	logChan    chan logData
+	logChan    chan *logData
 	yyyymmdd   int    //日志年月日
 	namePrefix string //日志文件名称前缀
 	waitGroup  sync.WaitGroup
@@ -38,7 +38,7 @@ func (p *Log) Init(namePrefix string) (err error) {
 	}
 	p.logger = log.New(p.file, "", logFlag)
 
-	p.logChan = make(chan logData, 10000)
+	p.logChan = make(chan *logData, 10000)
 
 	p.waitGroup.Add(1)
 	go p.onOutPut()
