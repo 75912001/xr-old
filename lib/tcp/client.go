@@ -4,102 +4,111 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 
 	"github.com/75912001/xr/lib/log"
 )
 
-//断开链接事件channel 基于自身是client
-type CloseConnectEventChanClient struct {
-	Client *Client
-}
-
-//收到数据事件channel 基于自身是client
-type RecvEventChanClient struct {
-	Buf    []byte
-	Client *Client
-}
-
-type OnParseProtoHead func(buf []byte, length int) int //解析协议包头 返回长度:完整包总长度  返回0:不是完整包 返回-1:包错误
-type OnCloseConnect func(client *Client) int           //远端链接关闭
-type OnPacket func(client *Client, buf []byte) int     //远端包
-
-//Client 己方作为客户端
+//己方作为客户端
 type Client struct {
-	OnPacket       OnPacket
-	onCloseConnect OnCloseConnect
-	server         remote //远端
+	OnPacket  OnPacketClient
+	onDisconn OnDisconnClient
+	server    remote
+	eventChan chan interface{}
 }
 
-//Connect 连接
-//recvBufMax:接受数据的最大长度
-//eventChan:外部传递的事件处理
-func (p *Client) Connect(ip string, port uint16, recvBufMax uint32, eventChan chan interface{}, onParseProtoHead OnParseProtoHead, onCloseConnect OnCloseConnect, onPacket OnPacket) (err error) {
-	p.onCloseConnect = onCloseConnect
+//连接
+//每个连接有一个 发送协程, 一个 接收协程
+//事件放入 参数 eventChan 中, 以供外部处理
+//address:127.0.0.1:8787
+//recvPacketMaxLen:接受数据包的最大长度(包头+包体)
+//eventChan:外部传递的事件处理管道.连接的事件会放入该管道,以供外部处理
+//sendChanCapacity:发送管道容量
+func (p *Client) Connect(address string, recvPacketMaxLen uint32, eventChan chan interface{},
+	onParseProtoHead OnParseProtoHead, onDisconn OnDisconnClient, onPacket OnPacketClient,
+	sendChanCapacity uint32) (err error) {
+	log.GLog.Trace(fmt.Sprintf("address:%v, recvPacketMaxLen:%v, eventChan:%v, onParseProtoHead:%v, onDisconn:%v, onPacket:%v, sendChanCapacity:%v",
+		address, recvPacketMaxLen, eventChan, onParseProtoHead, onDisconn, onPacket, sendChanCapacity))
+	p.onDisconn = onDisconn
 	p.OnPacket = onPacket
-	var addr = ip + ":" + strconv.Itoa(int(port))
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", addr)
+	p.eventChan = eventChan
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", address)
 	if nil != err {
-		log.GLog.Crit(fmt.Sprintf("net.ResolveTCPAddr, err:%v, addr:%v", err, addr))
+		log.GLog.Crit(fmt.Sprintf("net.ResolveTCPAddr, err:%v, address:%v", err, address))
 		return
 	}
+
+	p.server.connLock.Lock()
+	defer p.server.connLock.Unlock()
 	p.server.conn, err = net.DialTCP("tcp", nil, tcpAddr)
 	if nil != err {
-		log.GLog.Crit(fmt.Sprintf("net.Dial, err:%v, addr:%v", err, addr))
+		log.GLog.Crit(fmt.Sprintf("net.Dial, err:%v address:%v", err, address))
 		return
 	}
 
-	p.server.sendEventChanCnt = 1024
-	p.server.sendChan = make(chan interface{}, p.server.sendEventChanCnt)
-	go onEventSend(p.server.sendChan)
+	p.server.sendChan = make(chan interface{}, sendChanCapacity)
+	go p.server.onSendEvent()
 
-	go p.recv(p.server.conn, eventChan, recvBufMax, onParseProtoHead)
+	go p.onRecvEvent(recvPacketMaxLen, onParseProtoHead)
 	return
 }
 
-func (p *Client) DisConnect() {
-	p.server.lock.Lock()
-	defer p.server.lock.Unlock()
+//主动断开连接
+func (p *Client) DisConn() (err error) {
+	if !p.server.isConn() {
+		log.GLog.Warn("link disconnect.")
+		return errors.New("[ERROR]link disconnect.")
+	}
+	p.eventChan <- &DisconnEventClient{
+		Client: p,
+	}
+	return
+}
+
+//处理断开链接
+func (p *Client) OnDisConn() {
+	p.server.connLock.Lock()
+	defer p.server.connLock.Unlock()
 
 	if p.server.sendChan != nil {
 		close(p.server.sendChan)
 		p.server.sendChan = nil
 	}
 
-	if p.server.isConnect() {
-		p.onCloseConnect(p)
+	if p.server.isConn() {
+		p.onDisconn(p)
 		p.server.conn.Close()
 		p.server.conn = nil
 	}
 }
 
 //发送数据(必须在处理EventChan事件中调用)
-func (p *Client) Send(buf []byte) (err error) {
-	if !p.server.isConnect() {
+func (p *Client) Send(data []byte) (err error) {
+	if !p.server.isConn() {
 		log.GLog.Warn("link disconnect.")
 		return errors.New("[ERROR]link disconnect.")
 	}
-	var c sendEventChan
-	c.buf = buf
-	c.dst = &p.server
-	p.server.sendChan <- &c
+	p.server.sendChan <- &sendEvent{
+		data: data,
+		dst:  &p.server,
+	}
 	return
 }
 
-func (p *Client) recv(conn *net.TCPConn, eventChan chan interface{}, recvBufMax uint32, onParseProtoHead OnParseProtoHead) {
-	log.GLog.Trace("recv goroutine start.")
+//接收数据
+func (p *Client) onRecvEvent(recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHead) {
+	log.GLog.Trace("goroutine start.")
 	defer func() { //断开链接
-		log.GLog.Trace("recv goroutine done.")
-		var c CloseConnectEventChanClient
-		c.Client = p
-		eventChan <- &c
+		log.GLog.Trace("goroutine done.")
+		p.eventChan <- &DisconnEventClient{
+			Client: p,
+		}
 	}()
 
-	buf := make([]byte, recvBufMax)
+	buf := make([]byte, recvPacketMaxLen)
 	var readIndex int
 	for {
 	LoopRead:
-		readNum, err := conn.Read(buf[readIndex:])
+		readNum, err := p.server.conn.Read(buf[readIndex:])
 		if nil != err {
 			log.GLog.Error(fmt.Sprintf("Conn.Read, read num:%v, err:%v", readNum, err))
 			return
@@ -112,16 +121,16 @@ func (p *Client) recv(conn *net.TCPConn, eventChan chan interface{}, recvBufMax 
 			}
 
 			if -1 == packetLength {
-				log.GLog.Crit(fmt.Sprintf("packetLength:%v, readIndex:%v, Buf:%v", packetLength, readIndex, buf))
+				log.GLog.Crit(fmt.Sprintf("packetLength:%v, readIndex:%v, Data:%v", packetLength, readIndex, buf))
 				return
 			}
 
 			{ //接受数据
-				var c RecvEventChanClient
-				c.Buf = make([]byte, packetLength)
+				var c PacketEventClient
+				c.Data = make([]byte, packetLength)
 				c.Client = p
-				copy(c.Buf, buf[:packetLength])
-				eventChan <- &c
+				copy(c.Data, buf[:packetLength])
+				p.eventChan <- &c
 			}
 			copy(buf, buf[packetLength:readIndex])
 			readIndex -= packetLength

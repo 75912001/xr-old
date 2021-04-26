@@ -22,14 +22,15 @@ var sendSumCount int
 func TestClient_Connect(t *testing.T) {
 	log.GLog = &log.Log{}
 	log.GLog.Init("connect_")
-	log.GLog.SetLevel(7)
 
 	go handleEventChan()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		var client Client
-		client.Connect("127.0.0.1", 6666, 1024, eventChan, OnParseProtoHeadFun, OnCloseConnectFun, OnPacketFun)
-		client.DisConnect()
+		client.Connect("127.0.0.1:6666", 1024, eventChan, OnParseProtoHeadFun, OnDisconnectFun, OnPacketFun, 1024)
+		time.Sleep(time.Nanosecond * 5) //立即disconnect, 可能会在关闭connect后,才调用协程中的conn.Read, 这时conn为nil.
+		time.Sleep(time.Nanosecond * 5)
+		client.DisConn()
 	}
 
 	for i := 0; i < 2; i++ {
@@ -62,7 +63,7 @@ func TestClient_Send(t *testing.T) {
 	go handleEventChan()
 
 	var client Client
-	client.Connect("127.0.0.1", 6666, 1024, eventChan, OnParseProtoHeadFun, OnCloseConnectFun, OnPacketFun)
+	client.Connect("127.0.0.1:6666", 1024, eventChan, OnParseProtoHeadFun, OnDisconnectFun, OnPacketFun, 1024)
 
 	for i := 0; i < 100000; i++ {
 		client.Send(buf8.Bytes())
@@ -74,7 +75,7 @@ func TestClient_Send(t *testing.T) {
 		time.Sleep(time.Second)
 		log.GLog.Debug(fmt.Sprintf("%v", i))
 	}
-	client.DisConnect()
+	client.DisConn()
 }
 
 //go test -v -test.run TestClient_Recv
@@ -102,7 +103,7 @@ func TestClient_Recv(t *testing.T) {
 
 	var client Client
 
-	client.Connect("127.0.0.1", 6666, 102400, eventChan, OnParseProtoHeadFun, OnCloseConnectFun, OnPacketFun)
+	client.Connect("127.0.0.1:6666", 1024, eventChan, OnParseProtoHeadFun, OnDisconnectFun, OnPacketFun, 1024)
 
 	for i := 0; i < 100000; i++ {
 		client.Send(buf8.Bytes())
@@ -115,7 +116,7 @@ func TestClient_Recv(t *testing.T) {
 		time.Sleep(time.Second)
 		log.GLog.Debug(fmt.Sprintf("%v", i))
 	}
-	client.DisConnect()
+	client.DisConn()
 	log.GLog.Trace(fmt.Sprintf("recv sum count:%v", recvSumCount))
 }
 
@@ -124,21 +125,24 @@ func handleEventChan() (err error) {
 	//处理数据
 	for v := range eventChan {
 		switch v.(type) {
-		case *CloseConnectEventChanClient:
-			vv, ok := v.(*CloseConnectEventChanClient)
+		case *DisconnEventClient:
+			vv, ok := v.(*DisconnEventClient)
 			if ok {
-				log.GLog.Trace(fmt.Sprintf("CloseConnectEventChanClient."))
-				vv.Client.DisConnect()
+				log.GLog.Trace(fmt.Sprintf("CloseConnectEventChan."))
+				vv.Client.OnDisConn()
 			} else {
-				log.GLog.Crit("CloseConnectEventChanClient type error.")
+				log.GLog.Crit("CloseConnectEventChan type error.")
 			}
-		case *RecvEventChanClient:
-			vv, ok := v.(*RecvEventChanClient)
+		case *PacketEventClient:
+			vv, ok := v.(*PacketEventClient)
 			if ok {
-				log.GLog.Trace(fmt.Sprintf("RecvEventChanClient."))
-				vv.Client.OnPacket(vv.Client, vv.Buf)
+				if !vv.Client.server.isConn() {
+					continue
+				}
+				log.GLog.Trace(fmt.Sprintf("RecvEventChan."))
+				vv.Client.OnPacket(vv.Client, vv.Data)
 			} else {
-				log.GLog.Crit("RecvEventChanClient type error.")
+				log.GLog.Crit("RecvEventChan type error.")
 			}
 		default:
 			log.GLog.Crit(fmt.Sprintf("not find event, event:%v", v))
@@ -174,15 +178,15 @@ func parseProtoHeadPacketLength(buf []byte) (packetLength uint32) {
 }
 
 //远端链接关闭
-func OnCloseConnectFun(client *Client) int {
-	log.GLog.Trace(fmt.Sprintf("OnCloseConnect. remote close connect, server ip:%v", client.server.conn.RemoteAddr().String()))
+func OnDisconnectFun(client *Client) int {
+	log.GLog.Trace(fmt.Sprintf("disconnect, server ip:%v", client.server.conn.RemoteAddr().String()))
 	//TODO
 	return 0
 }
 
 //远端包
 func OnPacketFun(client *Client, buf []byte) int {
-	log.GLog.Trace(fmt.Sprintf("OnPacket. remote packet, server ip:%v, len:%v", client.server.conn.RemoteAddr().String(), len(buf)))
+	log.GLog.Trace(fmt.Sprintf("packet, server ip:%v, len:%v", client.server.conn.RemoteAddr().String(), len(buf)))
 	//TODO
 	recvSumCount += len(buf)
 	return 0
