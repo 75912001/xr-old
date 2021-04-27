@@ -22,7 +22,7 @@ type TimerMgr struct {
 type OnTimerFun func(data interface{}) int
 
 //Start millisecond:毫秒间隔(如50,则每50毫秒扫描一次毫秒定时器)
-//timerOutChan 是超时事件放置的channel,由外部传入
+//timerOutChan 是超时事件放置的channel,由外部传入(处理定时器相关数据,必须与该timerOutChan线性处理.如:在同一个select中处理数据.)
 func (p *TimerMgr) Start(ctx context.Context, millisecond int64, timerOutChan chan<- interface{}) {
 	for idx := range p.secondVec {
 		p.secondVec[idx] = &tvecRoot{}
@@ -35,6 +35,11 @@ func (p *TimerMgr) Start(ctx context.Context, millisecond int64, timerOutChan ch
 	p.cancelFunc = cancelFunc
 	//每秒更新
 	go func(ctx context.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("timer second goroutine panic:%v\n", err)
+			}
+		}()
 		for {
 			select {
 			case <-ctx.Done():
@@ -51,6 +56,11 @@ func (p *TimerMgr) Start(ctx context.Context, millisecond int64, timerOutChan ch
 
 	//每millisecond个毫秒更新
 	go func(ctx context.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("timer millisecond goroutine painc:%v\n", err)
+			}
+		}()
 		for {
 			select {
 			case <-ctx.Done():

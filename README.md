@@ -1,12 +1,14 @@
 # xr
 draft:
+
+done:
 lib/ec
 error code library.
 
-draft:
+done:
 lib/timer
 timer library.
 
-ongoing:
+done:
 lib/log
 log library

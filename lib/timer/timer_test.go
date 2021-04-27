@@ -31,6 +31,11 @@ func TestTimerSecond(t *testing.T) {
 	var outChan <-chan interface{}
 	outChan = c
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("timer second goroutine painc:%v\n", err)
+			}
+		}()
 		for v := range outChan {
 			switch v.(type) {
 			case *TimerSecond:

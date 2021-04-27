@@ -1,13 +1,13 @@
 package log
 
 import (
+	"fmt"
+	"github.com/75912001/xr/lib/util"
 	"log"
 	"os"
 	"runtime"
 	"strconv"
 	"time"
-
-	"github.com/75912001/xr/lib/util"
 )
 
 type logData struct {
@@ -17,13 +17,19 @@ type logData struct {
 
 // 写日志
 func (p *Log) onOutPut() {
+	var err error
 	defer p.waitGroup.Done()
 	for v := range p.logChan {
 		if p.yyyymmdd != v.YYYYMMDD {
 			p.file.Close()
 			p.yyyymmdd = v.YYYYMMDD
 			logName := p.namePrefix + strconv.Itoa(p.yyyymmdd)
-			p.file, _ = os.OpenFile(logName, p.fileFlag, p.perm)
+			p.file, err = os.OpenFile(logName, p.fileFlag, p.perm)
+			if nil != err {
+				fmt.Printf("log onOutPut OpenFile err:%v\n", err)
+				fmt.Printf("log:%v\n", v.data)
+				continue
+			}
 			p.logger = log.New(p.file, "", p.logFlag)
 		}
 		p.logger.Print(v.data)

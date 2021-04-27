@@ -49,7 +49,14 @@ func (p *Log) Init(namePrefix string) (err error) {
 	p.logChan = make(chan logData, 10000)
 
 	p.waitGroup.Add(1)
-	go p.onOutPut()
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("log onOutPut goroutine painc:%v\n", err)
+			}
+		}()
+		p.onOutPut()
+	}()
 	return err
 }
 
