@@ -18,6 +18,7 @@ const (
 	ECType
 	ECInvPointer
 	ECUnknown
+	ECMAX = 0xff
 )
 
 // defines error information

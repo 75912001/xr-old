@@ -2,150 +2,208 @@ package timer
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
-
-	//"fmt"
 	"testing"
 	"time"
+
+	"github.com/75912001/xr-master/lib/util"
 )
 
 /*
  go test -v -count=1
 */
-var allCnt int64 = 10000000 //1000w
-var iChan chan int64 = make(chan int64, allCnt)
-var eachCnt int64 = 100000 //每次处理多少个打印一次日志 10w
+//扫描间隔(毫秒)
+var scanSecondDuration time.Duration = 100
+var scanMillisecondDuration time.Duration = 100
+
+var testTimerCnt uint64 = 10000
+var cbChan chan interface{} = make(chan interface{}, testTimerCnt)
+
+//超时事件放置的channel
+var eventChan chan interface{} = make(chan interface{}, testTimerCnt*10)
 
 func cb(data interface{}) int {
-	cb_cnt := data.(int64)
-	iChan <- cb_cnt
+	cbChan <- data.(*User)
 	return 0
 }
 
-func TestTimerSecond(t *testing.T) {
+type User struct {
+	ID           uint64
+	pSecond      *Second
+	pMilliSecond *Millisecond
+	tm           *TimerMgr
+}
+
+func (p *User) AddSecond() bool {
+	second := time.Now().Unix()
+	p.pSecond = p.tm.AddSecond(cb, p, second+rand.Int63n(10))
+	if rand.Int31n(100) < 20 {
+		p.DelSecond()
+		return false
+	}
+	return true
+}
+
+func (p *User) DelSecond() {
+	DelSecond(p.pSecond)
+}
+
+func (p *User) AddMillisecond() bool {
+	n := time.Now()
+	millisecond := n.UnixNano() / 1000000
+
+	p.pMilliSecond = p.tm.AddMillisecond(cb, p, millisecond+rand.Int63n(1000))
+
+	if rand.Int31n(100) < 20 {
+		p.DelMillisecond()
+		return false
+	}
+	return true
+}
+
+func (p *User) DelMillisecond() {
+	DelMillisecond(p.pMilliSecond)
+}
+
+func TestSecond(t *testing.T) {
+	var trigger int = 0
+	eventChan <- &trigger
+
+	var waitCnt = testTimerCnt
 	var tm TimerMgr
+	tm.Start(context.Background(), scanSecondDuration, scanMillisecondDuration, eventChan)
 
-	var c chan interface{} = make(chan interface{}, allCnt)
-	tm.Start(context.Background(), 100, c)
-
-	var outChan <-chan interface{}
-	outChan = c
-	go func() {
+	ctxWithCancel, cancelFunc := context.WithCancel(context.Background())
+	go func(ctx context.Context) {
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Printf("timer second goroutine painc:%v\n", err)
 			}
+			fmt.Println("defer timer second goroutine done.")
 		}()
-		for v := range outChan {
-			switch v.(type) {
-			case *TimerSecond:
-				tv, ok := v.(*TimerSecond)
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Printf("context %v goroutine done.\n", util.GetFuncName())
+				return
+			case v, ok := <-eventChan:
 				if ok {
-					tv.Function(tv.Arg)
+					switch v.(type) {
+					case *int:
+						for i := uint64(0); i < testTimerCnt; i++ {
+							user := &User{
+								ID:           uint64(i),
+								pSecond:      nil,
+								pMilliSecond: nil,
+								tm:           &tm,
+							}
+							if !user.AddSecond() {
+								waitCnt--
+							}
+						}
+						fmt.Println("AddSecond done.")
+					case *Second:
+						v1, ok1 := v.(*Second)
+						if ok1 {
+							if v1.IsValid() {
+								v1.Function(v1.Arg)
+							}
+						}
+					}
 				}
+			default:
+				time.Sleep(time.Millisecond)
+				//fmt.Println("sleep 1 second ...")
 			}
 		}
-	}()
+	}(ctxWithCancel)
 
-	second := time.Now().Unix()
-	for i := int64(1); i <= allCnt; i++ {
-		tm.AddSecond(cb, i, second+rand.Int63n(10))
-	}
-
-	for i := int64(1); i <= allCnt; i++ {
-		<-iChan
-	}
-	tm.Exit()
-	close(c)
-	time.Sleep(time.Second)
-}
-
-func addCB(data interface{}) int {
-	tm := data.(*TimerMgr)
-	n := time.Now()
-	second := n.Unix()
-	for i := int64(1); i <= allCnt; i++ {
-		t := tm.AddSecond(cb, i, second+rand.Int63n(10))
-		if i%2 == 0 {
-			tm.DelSecond(t)
-			tm.AddSecond(cb, i, second+rand.Int63n(10))
+	{ //仅用于测试 ...
+		//等待所有timer结束
+		for i := uint64(0); i < waitCnt; i++ {
+			user := <-cbChan
+			pUser := user.(*User)
+			_ = pUser
 		}
 	}
-	return 0
+
+	tm.Exit()
+	cancelFunc()
+
+	{ //仅用于测试 ...
+		//	time.Sleep(time.Second * 1)
+	}
+	fmt.Printf("all timer cnt:%v\n", waitCnt)
 }
 
-func TestTimerSecondAddCBDelCB(t *testing.T) {
+func TestMillisecond(t *testing.T) {
+	var trigger int = 0
+	eventChan <- &trigger
+
+	var waitCnt = testTimerCnt
 	var tm TimerMgr
-	second := time.Now().Unix()
-	var c chan interface{} = make(chan interface{}, allCnt)
-	tm.Start(context.Background(), 100, c)
+	tm.Start(context.Background(), scanSecondDuration, scanMillisecondDuration, eventChan)
 
-	var outChan <-chan interface{}
-	outChan = c
-	go func() {
-		for v := range outChan {
-			switch v.(type) {
-			case *TimerSecond:
-				tv, ok := v.(*TimerSecond)
+	ctxWithCancel, cancelFunc := context.WithCancel(context.Background())
+	go func(ctx context.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("timer millisecond goroutine painc:%v\n", err)
+			}
+		}()
+		for {
+			select {
+			case <-ctx.Done():
+
+				fmt.Printf("%v goroutine done.\n", util.GetFuncName())
+				return
+			case v, ok := <-eventChan:
 				if ok {
-					tv.Function(tv.Arg)
+					switch v.(type) {
+					case *int:
+						for i := uint64(0); i < testTimerCnt; i++ {
+							user := &User{
+								ID:           uint64(i),
+								pSecond:      nil,
+								pMilliSecond: nil,
+								tm:           &tm,
+							}
+							if !user.AddMillisecond() {
+								waitCnt--
+							}
+						}
+						fmt.Printf("AddMillisecond done.\n")
+					case *Millisecond:
+						v1, ok1 := v.(*Millisecond)
+						if ok1 {
+							if v1.IsValid() {
+								v1.Function(v1.Arg)
+							}
+						}
+					}
 				}
+			default:
+				time.Sleep(time.Millisecond)
+				//fmt.Printf("sleep 1 second ...\n")
 			}
 		}
-	}()
+	}(ctxWithCancel)
 
-	t1 := tm.AddSecond(addCB, &tm, second)
-	tm.DelSecond(t1)
-	tm.AddSecond(addCB, &tm, second)
-
-	for i := int64(1); i <= allCnt; i++ {
-		<-iChan
-	}
-	tm.Exit()
-	close(c)
-	time.Sleep(time.Second)
-}
-
-func cb2(data interface{}) int {
-	cb_cnt := data.(int64)
-	iChan <- cb_cnt
-	return 0
-}
-func addCB2(data interface{}) int {
-	tm := data.(*TimerMgr)
-	n := time.Now()
-	millisecond := n.UnixNano() / 1000000
-	for i := int64(1); i <= allCnt; i++ {
-		tm.AddMillisecond(cb2, i, millisecond)
-	}
-
-	return 0
-}
-func TestTimerMillisecond(t *testing.T) {
-	var tm TimerMgr
-	n := time.Now()
-	millisecond := n.UnixNano() / 1000000
-
-	var c chan interface{} = make(chan interface{}, allCnt)
-
-	tm.Start(context.Background(), 100, c)
-
-	tm.AddMillisecond(addCB2, &tm, millisecond)
-	go func() {
-		for v := range c {
-			switch v.(type) {
-			case *TimerMillisecond:
-				tv, ok := v.(*TimerMillisecond)
-				if ok {
-					tv.Function(tv.Arg)
-				}
-			}
+	{ //仅用于测试 ...
+		//等待所有timer结束
+		for i := uint64(0); i < waitCnt; i++ {
+			user := <-cbChan
+			pUser := user.(*User)
+			_ = pUser
 		}
-	}()
-	for i := int64(1); i <= allCnt; i++ {
-		<-iChan
 	}
+
 	tm.Exit()
-	close(c)
-	time.Sleep(time.Second)
+	cancelFunc()
+
+	{ //仅用于测试 ...
+		//time.Sleep(time.Second * 1)
+	}
+	fmt.Printf("all timer cnt:%v\n", waitCnt)
 }

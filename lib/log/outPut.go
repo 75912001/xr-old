@@ -2,7 +2,6 @@ package log
 
 import (
 	"fmt"
-	"github.com/75912001/xr/lib/util"
 	"log"
 	"os"
 	"runtime"
@@ -11,7 +10,7 @@ import (
 )
 
 type logData struct {
-	YYYYMMDD int
+	yyyymmdd int
 	data     string
 }
 
@@ -19,18 +18,20 @@ type logData struct {
 func (p *Log) onOutPut() {
 	var err error
 	defer p.waitGroup.Done()
+
 	for v := range p.logChan {
-		if p.yyyymmdd != v.YYYYMMDD {
+		if p.yyyymmdd != v.yyyymmdd {
 			p.file.Close()
-			p.yyyymmdd = v.YYYYMMDD
+			p.yyyymmdd = v.yyyymmdd
 			logName := p.namePrefix + strconv.Itoa(p.yyyymmdd)
-			p.file, err = os.OpenFile(logName, p.fileFlag, p.perm)
-			if nil != err {
+
+			p.file, err = os.OpenFile(logName, logFileFlag, logFilePerm)
+			if err != nil {
 				fmt.Printf("log onOutPut OpenFile err:%v\n", err)
 				fmt.Printf("log:%v\n", v.data)
 				continue
 			}
-			p.logger = log.New(p.file, "", p.logFlag)
+			p.logger = log.New(p.file, "", logFlag)
 		}
 		p.logger.Print(v.data)
 	}
@@ -44,8 +45,8 @@ func (p *Log) outPut(calldepth int, prefix *string, str *string) {
 	}
 	funName := runtime.FuncForPC(pc).Name()
 	var strLine = strconv.Itoa(line)
-	p.logChan <- logData{
-		YYYYMMDD: util.GenYYYYMMDD(time.Now().Unix()),
+	p.logChan <- &logData{
+		yyyymmdd: genYYYYMMDD(time.Now().Unix()),
 		data:     "[" + *prefix + "][" + funName + "][" + strLine + "]" + *str,
 	}
 }

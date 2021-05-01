@@ -35,7 +35,7 @@ func genDuration(idx int) (duration int64) {
 }
 
 // 根据到期时间找到时间轮的序号
-func (p *TimerMgr) findTvecRootIdx(expire int64) (idx int) {
+func findTvecRootIdx(expire int64) (idx int) {
 	var duration = expire - time.Now().Unix()
 	for k, v := range gTvecRootDuration {
 		if duration <= v {
@@ -53,7 +53,7 @@ func (p *TimerMgr) findTvecRootIdx(expire int64) (idx int) {
 }
 
 // 向前查找符合时间差的时间轮序号
-func (p *TimerMgr) findPrevTvecRootIdx(duration int64, srcIdx int) (idx int) {
+func findPrevTvecRootIdx(duration int64, srcIdx int) (idx int) {
 	idx = srcIdx
 	for {
 		if 0 != srcIdx && duration <= gTvecRootDuration[srcIdx-1] {
