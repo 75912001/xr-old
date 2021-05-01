@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -29,16 +28,17 @@ type Log struct {
 func (p *Log) Init(namePrefix string) (err error) {
 	p.level = LevelOn
 	p.namePrefix = namePrefix
-	p.yyyymmdd = genYYYYMMDD(time.Now().Unix())
+	second := time.Now().Unix()
+	p.yyyymmdd = genYYYYMMDD(second)
 
-	logName := p.namePrefix + strconv.Itoa(p.yyyymmdd)
+	logName := genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), fmt.Sprintf("%v", second))
 	p.file, err = os.OpenFile(logName, logFileFlag, logFilePerm)
 	if nil != err {
 		return err
 	}
 	p.logger = log.New(p.file, "", logFlag)
 
-	p.logChan = make(chan *logData, 10000)
+	p.logChan = make(chan *logData, 100000)
 
 	p.waitGroup.Add(1)
 	go func() {

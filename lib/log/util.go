@@ -17,3 +17,7 @@ func genYYYYMMDD(sec int64) (yyyymmdd int) {
 	yyyymmdd, _ = strconv.Atoi(strYYYYMMDD)
 	return
 }
+
+func genLogName(namePrefix, yyyymmdd, second string) (logName string) {
+	return namePrefix + "-" + yyyymmdd + "-" + second
+}

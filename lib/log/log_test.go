@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -28,14 +29,29 @@ func TestExample(t *testing.T) {
 	var log *Log = new(Log)
 	log.Init("test_log")
 
-	log.Trace("trace")
-	log.Debug("debug")
-	log.Info("info")
-	log.Notice("notice")
-	log.Warn("warn")
-	log.Error("error")
-	log.Crit("crit")
-	log.Emerg("emerg")
+	log.SetLevel(LevelOn)
+	for i := 0; i < 100000; i++ {
+		log.Trace(fmt.Sprintf("LevelOn trace:%v", 1))
+		log.Debug(fmt.Sprintf("LevelOn debug:%v,%v", "2", 3))
+		log.Info("LevelOn info")
+		log.Notice("LevelOn notice")
+		log.Warn("LevelOn warn")
+		log.Error("LevelOn error")
+		log.Crit("LevelOn crit")
+		log.Emerg("LevelOn emerg")
+	}
 
+	log.SetLevel(LevelOff)
+	log.Trace(fmt.Sprintf("LevelOff trace:%v", 1))
+	log.Debug(fmt.Sprintf("LevelOff debug:%v,%v", "2", 3))
+	log.Info("LevelOff info")
+	log.Notice("LevelOff notice")
+	log.Warn("LevelOff warn")
+	log.Error("LevelOff error")
+	log.Crit("LevelOff crit")
+	log.Emerg("LevelOff emerg")
+
+	//for test coverage
+	log.SetLevel(100)
 	log.Exit()
 }

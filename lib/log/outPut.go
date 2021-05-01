@@ -10,8 +10,8 @@ import (
 )
 
 type logData struct {
-	yyyymmdd int
-	data     string
+	second int64
+	data   string
 }
 
 // 写日志
@@ -20,11 +20,12 @@ func (p *Log) onOutPut() {
 	defer p.waitGroup.Done()
 
 	for v := range p.logChan {
-		if p.yyyymmdd != v.yyyymmdd {
+		yyyymmdd := genYYYYMMDD(v.second)
+		if p.yyyymmdd != yyyymmdd {
 			p.file.Close()
-			p.yyyymmdd = v.yyyymmdd
+			p.yyyymmdd = yyyymmdd
 			logName := p.namePrefix + strconv.Itoa(p.yyyymmdd)
-
+			logName = genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), fmt.Sprintf("%v", v.second))
 			p.file, err = os.OpenFile(logName, logFileFlag, logFilePerm)
 			if err != nil {
 				fmt.Printf("log onOutPut OpenFile err:%v\n", err)
@@ -45,8 +46,9 @@ func (p *Log) outPut(calldepth int, prefix *string, str *string) {
 	}
 	funName := runtime.FuncForPC(pc).Name()
 	var strLine = strconv.Itoa(line)
+	second := time.Now().Unix()
 	p.logChan <- &logData{
-		yyyymmdd: genYYYYMMDD(time.Now().Unix()),
-		data:     "[" + *prefix + "][" + funName + "][" + strLine + "]" + *str,
+		second: second,
+		data:   "[" + *prefix + "][" + funName + "][" + strLine + "]" + *str,
 	}
 }
