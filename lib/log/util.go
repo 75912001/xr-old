@@ -19,5 +19,5 @@ func genYYYYMMDD(sec int64) (yyyymmdd int) {
 }
 
 func genLogName(namePrefix, yyyymmdd, second string) (logName string) {
-	return namePrefix + "-" + yyyymmdd + "-" + second
+	return namePrefix + "-" + yyyymmdd + "-" + second + ".log"
 }

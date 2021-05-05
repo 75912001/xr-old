@@ -18,6 +18,7 @@ const (
 	ECType
 	ECInvPointer
 	ECUnknown
+	ECNonExistent
 	ECMAX = 0xff
 )
 
@@ -39,24 +40,25 @@ func (p *errorInfo) getDetail() string {
 }
 
 var errorInformation = []errorInfo{
-	ECSucess:     {ECSucess, "ECSucess", "sucess"},
-	ECLink:       {ECLink, "ECLink", "link error"},
-	ECSYS:        {ECSYS, "ECSYS", "system error"},
-	ECParam:      {ECParam, "ECParam", "parameter error"},
-	ECPacket:     {ECPacket, "ECPacket", "data pack error"},
-	ECTimeOut:    {ECTimeOut, "ECTimeOut", "time out"},
-	ECChanFull:   {ECChanFull, "ECChanFull", "chan full"},
-	ECChanEmpty:  {ECChanEmpty, "ECChanEmpty", "chan empty"},
-	ECOutOfRange: {ECOutOfRange, "ECOutOfRange", "value out of range"},
-	ECInvValue:   {ECInvValue, "ECInvValue", "invalid value"},
-	ECConflict:   {ECConflict, "ECConflict", "conflict"},
-	ECType:       {ECType, "ECType", "type mismatch"},
-	ECInvPointer: {ECInvPointer, "ECInvPointer", "invalid pointer"},
-	ECUnknown:    {ECUnknown, "ECUnknown", "Unknown"},
+	ECSucess:      {ECSucess, "ECSucess", "sucess"},
+	ECLink:        {ECLink, "ECLink", "link error"},
+	ECSYS:         {ECSYS, "ECSYS", "system error"},
+	ECParam:       {ECParam, "ECParam", "parameter error"},
+	ECPacket:      {ECPacket, "ECPacket", "data pack error"},
+	ECTimeOut:     {ECTimeOut, "ECTimeOut", "time out"},
+	ECChanFull:    {ECChanFull, "ECChanFull", "chan full"},
+	ECChanEmpty:   {ECChanEmpty, "ECChanEmpty", "chan empty"},
+	ECOutOfRange:  {ECOutOfRange, "ECOutOfRange", "value out of range"},
+	ECInvValue:    {ECInvValue, "ECInvValue", "invalid value"},
+	ECConflict:    {ECConflict, "ECConflict", "conflict"},
+	ECType:        {ECType, "ECType", "type mismatch"},
+	ECInvPointer:  {ECInvPointer, "ECInvPointer", "invalid pointer"},
+	ECUnknown:     {ECUnknown, "ECUnknown", "Unknown"},
+	ECNonExistent: {ECNonExistent, "ECNonExistent", "non-existent"},
 }
 
 func init() {
-	for errorCode := ECSucess; errorCode <= ECUnknown; errorCode++ {
+	for errorCode := ECSucess; errorCode < ECMAX; errorCode++ {
 		err := Register(errorCode, errorInformation[errorCode].name, errorInformation[errorCode].description)
 		if err != nil {
 			panic(err)

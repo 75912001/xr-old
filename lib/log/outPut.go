@@ -40,7 +40,7 @@ func (p *Log) onOutPut() {
 
 // 路径,文件名,行数,函数名称
 func (p *Log) outPut(calldepth int, prefix *string, str *string) {
-	pc, _, line, ok := runtime.Caller(calldepth)
+	pc, file, line, ok := runtime.Caller(calldepth)
 	if !ok {
 		return
 	}
@@ -49,6 +49,6 @@ func (p *Log) outPut(calldepth int, prefix *string, str *string) {
 	second := time.Now().Unix()
 	p.logChan <- &logData{
 		second: second,
-		data:   "[" + *prefix + "][" + funName + "][" + strLine + "]" + *str,
+		data:   "[" + *prefix + "][" + file + "][" + funName + "][" + strLine + "]" + *str,
 	}
 }

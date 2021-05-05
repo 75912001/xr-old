@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/75912001/xr-master/lib/util"
+	"github.com/75912001/xr/lib/util"
 )
 
 /*
@@ -76,11 +76,12 @@ func TestSecond(t *testing.T) {
 
 	ctxWithCancel, cancelFunc := context.WithCancel(context.Background())
 	go func(ctx context.Context) {
+		fmt.Println("timer second goroutine start.")
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Printf("timer second goroutine painc:%v\n", err)
 			}
-			fmt.Println("defer timer second goroutine done.")
+			fmt.Println("timer second goroutine exit.")
 		}()
 		for {
 			select {
@@ -147,15 +148,16 @@ func TestMillisecond(t *testing.T) {
 
 	ctxWithCancel, cancelFunc := context.WithCancel(context.Background())
 	go func(ctx context.Context) {
+		fmt.Println("timer millisecond goroutine start.")
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Printf("timer millisecond goroutine painc:%v\n", err)
 			}
+			fmt.Println("timer millisecond goroutine exit.")
 		}()
 		for {
 			select {
 			case <-ctx.Done():
-
 				fmt.Printf("%v goroutine done.\n", util.GetFuncName())
 				return
 			case v, ok := <-eventChan:
@@ -173,7 +175,7 @@ func TestMillisecond(t *testing.T) {
 								waitCnt--
 							}
 						}
-						fmt.Printf("AddMillisecond done.\n")
+						//fmt.Printf("AddMillisecond done.\n")
 					case *Millisecond:
 						v1, ok1 := v.(*Millisecond)
 						if ok1 {
