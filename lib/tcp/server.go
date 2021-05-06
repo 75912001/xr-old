@@ -57,9 +57,6 @@ func (p *Server) Strat(address string, rwBuffLen int, recvPacketMaxLen uint32, e
 		}()
 		var tempDelay time.Duration
 		for {
-			//TODO
-			//1. 查看函数返回时间.
-			//2. 放入linux 测试.
 			conn, err := p.listener.AcceptTCP()
 			if nil != err {
 				if ne, ok := err.(net.Error); ok && ne.Temporary() {
@@ -79,8 +76,8 @@ func (p *Server) Strat(address string, rwBuffLen int, recvPacketMaxLen uint32, e
 				return
 			}
 			tempDelay = 0
-
-			p.handleConn(conn, rwBuffLen, recvPacketMaxLen, onParseProtoHead, sendChanCapacity)
+//TODO 去掉里面的go read
+			go p.handleConn(conn, rwBuffLen, recvPacketMaxLen, onParseProtoHead, sendChanCapacity)
 		}
 	}()
 

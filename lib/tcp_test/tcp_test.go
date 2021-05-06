@@ -1,49 +1,31 @@
-package tcp
+package tcp_test
 
 import (
-	"fmt"
-	"net"
-	"testing"
-	"time"
-
-	"github.com/75912001/xr/lib/log"
+"fmt"
+"github.com/75912001/xr/lib/log"
+"github.com/75912001/xr/lib/tcp"
+"time"
+"testing"
 )
 
-/*
-型号名称：	MacBook Pro
-型号标识符：	MacBookPro11,4
-处理器名称：	Intel Core i7
-处理器速度：	2.2 GHz
-处理器数目：	1
-核总数：	4
-L2 缓存（每个核）：	256 KB
-L3 缓存：	6 MB
-内存：	16 GB
-
-
-*/
-//1.测试客户端链接
-//1秒内多少次操作,持续10分钟后系统基本情况
-//2.测试客户端关闭
-//1秒内多少次操作,持续10分钟后系统基本情况
-//3.测试客户端完整包
-//1秒内多少次操作,持续10分钟后系统基本情况
-
 var eventChan = make(chan interface{}, 10000)
+var GLog *log.Log
 
 func init() {
 	GLog = new(log.Log)
 	GLog.Init("test_log")
+
+	tcp.GLog = GLog
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //server
-func OnConnServer(remote *Remote) int {
+func OnConnServer(remote *tcp.Remote) int {
 	//	fmt.Println("OnConnServer")
 	return 0
 }
 
-func OnDisConnServer(remote *Remote) int {
+func OnDisConnServer(remote *tcp.Remote) int {
 	//	fmt.Println("OnDisconnServer")
 	if remote.IsConn() {
 		remote.Close()
@@ -52,7 +34,7 @@ func OnDisConnServer(remote *Remote) int {
 	return 0
 }
 
-func OnPacketServer(remote *Remote, data []byte) int {
+func OnPacketServer(remote *tcp.Remote, data []byte) int {
 	fmt.Println("OnPacketServer")
 	return 0
 }
@@ -66,7 +48,7 @@ func OnParseProtoHeadServer(data []byte, length int) int {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //client
-func OnDisConnClient(client *Client) int {
+func OnDisConnClient(client *tcp.Client) int {
 	fmt.Println("OnDisconnClient")
 	if client.Remote.IsConn() {
 		client.Remote.Close()
@@ -75,7 +57,7 @@ func OnDisConnClient(client *Client) int {
 	return 0
 }
 
-func OnPacketClient(client *Client, data []byte) int {
+func OnPacketClient(client *tcp.Client, data []byte) int {
 	fmt.Println("OnPacketClient")
 	return 0
 }
@@ -90,21 +72,21 @@ func handleEvent() {
 	for v := range eventChan {
 		switch v.(type) {
 		//server
-		case *ConnEventServer:
-			vv, ok := v.(*ConnEventServer)
+		case *tcp.ConnEventServer:
+			vv, ok := v.(*tcp.ConnEventServer)
 			if ok {
 				GLog.Debug(fmt.Sprintf("ConnEventServer, remote:%v", vv.Remote))
 				vv.Server.OnConn(vv.Remote)
 
 			}
-		case *DisConnEventServer:
-			vv, ok := v.(*DisConnEventServer)
+		case *tcp.DisConnEventServer:
+			vv, ok := v.(*tcp.DisConnEventServer)
 			if ok {
 				GLog.Debug(fmt.Sprintf("DisConnEventServer, remote:%v", vv.Remote))
 				vv.Server.OnDisConn(vv.Remote)
 			}
-		case *PacketEventServer:
-			vv, ok := v.(*PacketEventServer)
+		case *tcp.PacketEventServer:
+			vv, ok := v.(*tcp.PacketEventServer)
 			if ok {
 				if !vv.Remote.IsConn() {
 					continue
@@ -112,14 +94,14 @@ func handleEvent() {
 				vv.Server.OnPacket(vv.Remote, vv.Data)
 			}
 			//client
-		case *DisConnEventClient:
-			vv, ok := v.(*DisConnEventClient)
+		case *tcp.DisConnEventClient:
+			vv, ok := v.(*tcp.DisConnEventClient)
 			if ok {
 				GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
 				vv.Client.OnDisConn(vv.Client)
 			}
-		case *PacketEventClient:
-			vv, ok := v.(*PacketEventClient)
+		case *tcp.PacketEventClient:
+			vv, ok := v.(*tcp.PacketEventClient)
 			if ok {
 				if !vv.Client.Remote.IsConn() {
 					continue
@@ -132,34 +114,11 @@ func handleEvent() {
 	}
 }
 
-func CheckPort(port string) error {
-	var err error
-
-	tcpAddress, err := net.ResolveTCPAddr("tcp4", ":"+port)
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < 3; i++ {
-		listener, err := net.ListenTCP("tcp", tcpAddress)
-		if err != nil {
-			time.Sleep(time.Duration(100) * time.Millisecond)
-			if i == 3 {
-				return err
-			}
-			continue
-		} else {
-			listener.Close()
-			break
-		}
-	}
-
-	return nil
-}
-
 func TestServer(t *testing.T) {
-	var s Server
-
+	var s tcp.Server
+	defer func() {
+		GLog.Exit()
+	}()
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -183,9 +142,67 @@ func TestServer(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second)
-		fmt.Println(fmt.Sprintf("server sendChanCnt:%v, recvChanCnt:%v", s.sendChanCnt, s.recvChanCnt))
+		sendChanCnt, recvChanCnt := s.Info()
+		fmt.Println(fmt.Sprintf("server sendChanCnt:%v, recvChanCnt:%v", sendChanCnt, recvChanCnt))
 	}
 }
+
+func TestClient(t *testing.T) {
+	defer func() {
+		GLog.Exit()
+	}()
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				GLog.Warn(fmt.Sprintf("handleEvent goroutine panic:%v", err))
+			}
+			GLog.Trace("handleEvent goroutine done.")
+		}()
+		handleEvent()
+	}()
+
+	address := "127.0.0.1:8787"
+	rwBuffLen := 1000
+	var recvPacketMaxLen uint32 = 1000
+	var sendChanCapacity uint32 = 1000
+	for i:= 0; i< 10000;i++{
+		var c tcp.Client
+		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+			eventChan, OnDisConnClient, OnPacketClient,OnParseProtoHeadClient, sendChanCapacity)
+		if err != nil {
+			t.Fatalf("server start err:", err)
+			return
+		}
+	}
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+//func CheckPort(port string) error {
+//	var err error
+//
+//	tcpAddress, err := net.ResolveTCPAddr("tcp4", ":"+port)
+//	if err != nil {
+//		return err
+//	}
+//
+//	for i := 0; i < 3; i++ {
+//		listener, err := net.ListenTCP("tcp", tcpAddress)
+//		if err != nil {
+//			time.Sleep(time.Duration(100) * time.Millisecond)
+//			if i == 3 {
+//				return err
+//			}
+//			continue
+//		} else {
+//			listener.Close()
+//			break
+//		}
+//	}
+//
+//	return nil
+//}
 
 ///////////////////////////////////
 //client
