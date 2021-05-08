@@ -3,12 +3,13 @@ package tcp
 import (
 	"fmt"
 	"net"
+
+	"github.com/75912001/xr/lib/log"
 )
 
 // 远端信息
 type Remote struct {
-	conn *net.TCPConn //连接
-	//connLock sync.RWMutex     //连接锁 //TODO [discuss] 是否需要该锁
+	conn     *net.TCPConn     //连接
 	sendChan chan interface{} //发送管道
 }
 
@@ -36,13 +37,13 @@ type sendEvent struct {
 
 //处理发送事件
 //当 conn 关闭, 该函数会引发 panic ...
-func (p *Remote) onSendEvent() {
-	GLog.Trace("goroutine start.")
+func (p *Remote) onSendEvent(log *log.Log) {
+	log.Trace("goroutine start.")
 	defer func() {
 		if err := recover(); err != nil {
-			GLog.Warn(fmt.Sprintf("onSendEvent goroutine panic:%v", err))
+			log.Warn(fmt.Sprintf("onSendEvent goroutine panic:%v", err))
 		}
-		GLog.Trace("goroutine done.")
+		log.Trace("goroutine done.")
 	}()
 	for v := range p.sendChan {
 		switch v.(type) {
@@ -54,7 +55,7 @@ func (p *Remote) onSendEvent() {
 					//超时10微妙 conn.SetWriteDeadline(time.Now().Add(time.Microsecond * 10))
 					n, err := vv.dst.conn.Write(vv.data[sum:])
 					if nil != err {
-						GLog.Warn(fmt.Sprintf("send data, cnt:%v, data:%v, err:%v", n, vv.data, err))
+						log.Warn(fmt.Sprintf("send data, cnt:%v, data:%v, err:%v", n, vv.data, err))
 						break
 					}
 					sum += n
@@ -64,25 +65,25 @@ func (p *Remote) onSendEvent() {
 				}
 			}
 		default:
-			GLog.Crit(fmt.Sprintf("the event type could not be found. event:%v", v))
+			log.Crit(fmt.Sprintf("the event type could not be found. event:%v", v))
 		}
 	}
 }
 
 //接收数据
 func (p *Server) onRecvEventChan(remote *Remote, recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadType) {
-	GLog.Trace("goroutine start.")
+	p.log.Trace("goroutine start.")
 
 	defer func() {
 		if err := recover(); err != nil {
-			GLog.Warn(fmt.Sprintf("goroutine panic:%v", err))
+			p.log.Warn(fmt.Sprintf("goroutine panic:%v", err))
 		} else { //断开链接
 			p.tcpChan <- &DisConnEventServer{
 				Server: p,
 				Remote: remote,
 			}
 		}
-		GLog.Trace("goroutine done.")
+		p.log.Trace("goroutine done.")
 	}()
 
 	//TODO [improvement] 环形缓冲
@@ -93,7 +94,7 @@ func (p *Server) onRecvEventChan(remote *Remote, recvPacketMaxLen uint32, onPars
 	LoopRead:
 		readNum, err := remote.conn.Read(buf[readIndex:])
 		if nil != err {
-			GLog.Error(fmt.Sprintf("Conn.Read, read num:%v, err:%v", readNum, err))
+			p.log.Error(fmt.Sprintf("Conn.Read, read num:%v, err:%v", readNum, err))
 			return
 		}
 		readIndex += readNum
@@ -104,7 +105,7 @@ func (p *Server) onRecvEventChan(remote *Remote, recvPacketMaxLen uint32, onPars
 			}
 
 			if -1 == packetLength {
-				GLog.Crit(fmt.Sprintf("packetLength:%v, readIndex:%v, Data:%v", packetLength, readIndex, buf))
+				p.log.Crit(fmt.Sprintf("packetLength:%v, readIndex:%v, Data:%v", packetLength, readIndex, buf))
 				return
 			}
 

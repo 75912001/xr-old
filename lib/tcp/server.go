@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/75912001/xr/lib/log"
+
 	"github.com/75912001/xr/lib/util"
 )
 
@@ -18,6 +20,7 @@ type Server struct {
 	listener    *net.TCPListener
 	recvChanCnt uint32
 	sendChanCnt uint32
+	log         *log.Log
 }
 
 //运行服务
@@ -25,16 +28,17 @@ type Server struct {
 //rwBuffLen:tcp recv/send 缓冲大小
 //recvPacketMaxLen:最大包长(包头+包体)
 //eventChan:外部传递的事件处理
-func (p *Server) Strat(address string, rwBuffLen int, recvPacketMaxLen uint32, eventChan chan<- interface{},
+func (p *Server) Strat(address string, log *log.Log, rwBuffLen int, recvPacketMaxLen uint32, eventChan chan<- interface{},
 	onConn OnConnServerType, onDisconn OnDisConnServerType, onPacket OnPacketServerType, onParseProtoHead OnParseProtoHeadType,
 	sendChanCapacity uint32) (err error) {
+	p.log = log
 	p.OnConn = onConn
 	p.OnPacket = onPacket
 	p.OnDisConn = onDisconn
 	p.tcpChan = eventChan
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if nil != err {
-		GLog.Crit(fmt.Sprintf("net.ResolveTCPAddr, err:%v, address:%v", err, address))
+		p.log.Crit(fmt.Sprintf("net.ResolveTCPAddr, err:%v, address:%v", err, address))
 		return
 	}
 
@@ -43,17 +47,17 @@ func (p *Server) Strat(address string, rwBuffLen int, recvPacketMaxLen uint32, e
 
 	p.listener, err = net.ListenTCP("tcp", tcpAddr)
 	if nil != err {
-		GLog.Crit(fmt.Sprintf("net.ListenTCP, tcpAddr:%v, err:%v", tcpAddr, err))
+		p.log.Crit(fmt.Sprintf("net.ListenTCP, tcpAddr:%v, err:%v", tcpAddr, err))
 		return
 	}
 
 	go func() {
-		GLog.Trace("AcceptTCP goroutine start.")
+		p.log.Trace("AcceptTCP goroutine start.")
 		defer func() {
 			if err := recover(); err != nil {
-				GLog.Crit(fmt.Sprintf("%v accept goroutine panic:%v", util.GetFuncName(), err))
+				p.log.Crit(fmt.Sprintf("%v accept goroutine panic:%v", util.GetFuncName(), err))
 			}
-			GLog.Trace("AcceptTCP goroutine exit.")
+			p.log.Trace("AcceptTCP goroutine exit.")
 		}()
 		var tempDelay time.Duration
 		for {
@@ -68,15 +72,15 @@ func (p *Server) Strat(address string, rwBuffLen int, recvPacketMaxLen uint32, e
 					if max := 1 * time.Second; tempDelay > max {
 						tempDelay = max
 					}
-					GLog.Warn(fmt.Sprintf("listen.AcceptTCP, tempDelay:%v, err:%v", tempDelay, err))
+					p.log.Warn(fmt.Sprintf("listen.AcceptTCP, tempDelay:%v, err:%v", tempDelay, err))
 					time.Sleep(tempDelay)
 					continue
 				}
-				GLog.Crit(fmt.Sprintf("listen.AcceptTCP, err:%v", err))
+				p.log.Crit(fmt.Sprintf("listen.AcceptTCP, err:%v", err))
 				return
 			}
 			tempDelay = 0
-//TODO 去掉里面的go read
+			//TODO 去掉里面的go read
 			go p.handleConn(conn, rwBuffLen, recvPacketMaxLen, onParseProtoHead, sendChanCapacity)
 		}
 	}()
@@ -95,7 +99,7 @@ func (p *Server) Exit() {
 //主动断开连接
 func (p *Server) DisConn(remote *Remote) (err error) {
 	if !remote.IsConn() {
-		GLog.Warn("link disconnect.")
+		p.log.Warn("link disconnect.")
 		return errors.New("[ERROR]link disconnect.")
 	}
 	p.tcpChan <- &DisConnEventServer{
@@ -110,7 +114,7 @@ func (p *Server) Info() (recvChanCnt, sendChanCnt uint32) {
 }
 
 func (p *Server) handleConn(conn *net.TCPConn, rwBuffLen int, recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadType, sendChanCapacity uint32) {
-	GLog.Debug(fmt.Sprintf("connection from:%v", conn.RemoteAddr().String()))
+	p.log.Debug(fmt.Sprintf("connection from:%v", conn.RemoteAddr().String()))
 
 	conn.SetNoDelay(true)
 	conn.SetReadBuffer(rwBuffLen)
@@ -124,11 +128,11 @@ func (p *Server) handleConn(conn *net.TCPConn, rwBuffLen int, recvPacketMaxLen u
 		atomic.AddUint32(&p.sendChanCnt, 1)
 		defer func() {
 			if err := recover(); err != nil {
-				GLog.Crit(fmt.Sprintf("onSendEvent goroutine panic:%v\n", err))
+				p.log.Crit(fmt.Sprintf("onSendEvent goroutine panic:%v\n", err))
 			}
 			atomic.AddUint32(&p.sendChanCnt, ^uint32(0))
 		}()
-		remote.onSendEvent()
+		remote.onSendEvent(p.log)
 	}()
 
 	//链接上
@@ -141,7 +145,7 @@ func (p *Server) handleConn(conn *net.TCPConn, rwBuffLen int, recvPacketMaxLen u
 		atomic.AddUint32(&p.recvChanCnt, 1)
 		defer func() {
 			if err := recover(); err != nil {
-				GLog.Crit(fmt.Sprintf("onRecvEventChan goroutine panic:%v\n", err))
+				p.log.Crit(fmt.Sprintf("onRecvEventChan goroutine panic:%v\n", err))
 			}
 			atomic.AddUint32(&p.recvChanCnt, ^uint32(0))
 		}()

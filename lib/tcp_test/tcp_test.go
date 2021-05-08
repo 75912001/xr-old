@@ -1,11 +1,14 @@
 package tcp_test
 
 import (
-"fmt"
-"github.com/75912001/xr/lib/log"
-"github.com/75912001/xr/lib/tcp"
-"time"
-"testing"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/75912001/xr/lib/addrmulticase"
+
+	"github.com/75912001/xr/lib/log"
+	"github.com/75912001/xr/lib/tcp"
 )
 
 var eventChan = make(chan interface{}, 10000)
@@ -14,8 +17,6 @@ var GLog *log.Log
 func init() {
 	GLog = new(log.Log)
 	GLog.Init("test_log")
-
-	tcp.GLog = GLog
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,11 +27,11 @@ func OnConnServer(remote *tcp.Remote) int {
 }
 
 func OnDisConnServer(remote *tcp.Remote) int {
-	//	fmt.Println("OnDisconnServer")
-	if remote.IsConn() {
-		remote.Close()
+	fmt.Println("OnDisconnServer")
+	if !remote.IsConn() {
+		GLog.Warn("duplicate shutdowns")
+		return 0
 	}
-
 	return 0
 }
 
@@ -50,10 +51,10 @@ func OnParseProtoHeadServer(data []byte, length int) int {
 //client
 func OnDisConnClient(client *tcp.Client) int {
 	fmt.Println("OnDisconnClient")
-	if client.Remote.IsConn() {
-		client.Remote.Close()
+	if !client.Remote.IsConn() {
+		GLog.Warn("duplicate shutdowns")
+		return 0
 	}
-
 	return 0
 }
 
@@ -84,6 +85,9 @@ func handleEvent() {
 			if ok {
 				GLog.Debug(fmt.Sprintf("DisConnEventServer, remote:%v", vv.Remote))
 				vv.Server.OnDisConn(vv.Remote)
+				if vv.Remote.IsConn() {
+					vv.Remote.Close()
+				}
 			}
 		case *tcp.PacketEventServer:
 			vv, ok := v.(*tcp.PacketEventServer)
@@ -99,6 +103,9 @@ func handleEvent() {
 			if ok {
 				GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
 				vv.Client.OnDisConn(vv.Client)
+				if vv.Client.Remote.IsConn() {
+					vv.Client.Remote.Close()
+				}
 			}
 		case *tcp.PacketEventClient:
 			vv, ok := v.(*tcp.PacketEventClient)
@@ -108,6 +115,9 @@ func handleEvent() {
 				}
 				vv.Client.OnPacket(vv.Client, vv.Data)
 			}
+		//addrMulticase
+		case *addrmulticase.AddrMulticast:
+
 		default:
 			GLog.Crit(fmt.Sprintf("non-existent event:%v", v))
 		}
@@ -115,10 +125,11 @@ func handleEvent() {
 }
 
 func TestServer(t *testing.T) {
-	var s tcp.Server
 	defer func() {
 		GLog.Exit()
 	}()
+
+	var s tcp.Server
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -133,7 +144,7 @@ func TestServer(t *testing.T) {
 	rwBuffLen := 1000
 	var recvPacketMaxLen uint32 = 1000
 	var sendChanCapacity uint32 = 1000
-	err := s.Strat(address, rwBuffLen, recvPacketMaxLen, eventChan,
+	err := s.Strat(address, GLog, rwBuffLen, recvPacketMaxLen, eventChan,
 		OnConnServer, OnDisConnServer, OnPacketServer, OnParseProtoHeadServer, sendChanCapacity)
 	if err != nil {
 		t.Fatalf("server start err:%v", err)
@@ -165,12 +176,12 @@ func TestClient(t *testing.T) {
 	rwBuffLen := 1000
 	var recvPacketMaxLen uint32 = 1000
 	var sendChanCapacity uint32 = 1000
-	for i:= 0; i< 10000;i++{
+	for i := 0; i < 10000; i++ {
 		var c tcp.Client
-		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
-			eventChan, OnDisConnClient, OnPacketClient,OnParseProtoHeadClient, sendChanCapacity)
+		err := c.Connect(address, GLog, rwBuffLen, recvPacketMaxLen,
+			eventChan, OnDisConnClient, OnPacketClient, OnParseProtoHeadClient, sendChanCapacity)
 		if err != nil {
-			t.Fatalf("server start err:", err)
+			t.Fatalf("server start err:%v", err)
 			return
 		}
 	}
