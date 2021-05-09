@@ -71,7 +71,7 @@ func (p *Remote) onSendEvent(log *log.Log) {
 }
 
 //接收数据
-func (p *Server) onRecvEventChan(remote *Remote, recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadType) {
+func (p *Server) onRecvEventChan(remote *Remote, recvPacketMaxLen int, onParseProtoHead OnParseProtoHeadType) {
 	p.log.Trace("goroutine start.")
 
 	defer func() {

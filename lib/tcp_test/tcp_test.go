@@ -141,10 +141,10 @@ func TestServer(t *testing.T) {
 	}()
 
 	address := "127.0.0.1:8787"
-	rwBuffLen := 1000
-	var recvPacketMaxLen uint32 = 1000
+
+	var recvPacketMaxLen int = 1000
 	var sendChanCapacity uint32 = 1000
-	err := s.Strat(address, GLog, rwBuffLen, recvPacketMaxLen, eventChan,
+	err := s.Strat(address, GLog, recvPacketMaxLen, eventChan,
 		OnConnServer, OnDisConnServer, OnPacketServer, OnParseProtoHeadServer, sendChanCapacity)
 	if err != nil {
 		t.Fatalf("server start err:%v", err)

@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"sync"
 	"time"
+
+	"github.com/75912001/xr/lib/util"
 )
 
 // Log 日志
@@ -21,18 +24,25 @@ type Log struct {
 	yyyymmdd   int    //日志年月日
 	namePrefix string //日志文件名称前缀
 	waitGroup  sync.WaitGroup
+	absPath    string //绝对路径
 }
 
 // Init 初始化
 // name:日志前缀名称
-func (p *Log) Init(namePrefix string) (err error) {
+func (p *Log) Init(absPath, namePrefix string) (err error) {
+	err = util.MkdirAll(absPath)
+	if err != nil {
+		return
+	}
+
+	p.absPath = absPath
 	p.level = LevelOn
 	p.namePrefix = namePrefix
 	second := time.Now().Unix()
 	p.yyyymmdd = genYYYYMMDD(second)
 
-	logName := genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), fmt.Sprintf("%v", second))
-	p.file, err = os.OpenFile(logName, logFileFlag, logFilePerm)
+	logName := genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), genHHMMSS(second))
+	p.file, err = os.OpenFile(path.Join(p.absPath, logName), logFileFlag, logFilePerm)
 	if nil != err {
 		return err
 	}
@@ -63,9 +73,12 @@ func (p *Log) SetLevel(level int) {
 
 // 退出
 func (p *Log) Exit() {
-	close(p.logChan)
-	p.waitGroup.Wait()
-	p.file.Close()
+	if p.logChan != nil {
+		close(p.logChan)
+		p.waitGroup.Wait()
+		p.file.Close()
+		p.logChan = nil
+	}
 }
 
 // Trace 踪迹日志

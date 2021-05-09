@@ -1,11 +1,24 @@
 package util
 
-import "runtime"
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+)
 
-func GetFuncName() (funcName string) {
+func GetCurrentFuncName() (funcName string) {
 	pc, _, _, ok := runtime.Caller(1)
 	if !ok {
-		return "GetFuncName err: nil"
+		return "GetCurrentFuncName err: nil"
 	}
 	return runtime.FuncForPC(pc).Name()
+}
+
+//TODO 注意:不支持 link/快捷方式
+func GetCurrentPath() (currentPath string, err error) {
+	currentPath, err = filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return
+	}
+	return
 }

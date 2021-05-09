@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,6 +16,13 @@ var logFlag int = log.Lmicroseconds //log.Ldate|log.Llongfile
 func genYYYYMMDD(sec int64) (yyyymmdd int) {
 	strYYYYMMDD := time.Unix(sec, 0).Format("20060102")
 	yyyymmdd, _ = strconv.Atoi(strYYYYMMDD)
+	return
+}
+
+//if 15:04:05  return 150405
+func genHHMMSS(sec int64) (hhmmss string) {
+	hhmmss = time.Unix(sec, 0).Format("15:04:05")
+	hhmmss = strings.Replace(hhmmss, ":", "", -1)
 	return
 }
 

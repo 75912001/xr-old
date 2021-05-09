@@ -1,21 +1,30 @@
-package timer
+package timer_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"testing"
 	"time"
+)
 
-	"github.com/75912001/xr/lib/util"
+package timer
+
+import (
+"context"
+"fmt"
+"math/rand"
+"testing"
+"time"
+
+"github.com/75912001/xr/lib/util"
 )
 
 /*
  go test -v -count=1
 */
-//扫描间隔(毫秒)
-var scanSecondDuration time.Duration = 100
-var scanMillisecondDuration time.Duration = 100
+//扫描间隔(纳秒)
+var scanSecondDuration time.Duration = 100000000//100毫秒
+var scanMillisecondDuration time.Duration = 100000000//100毫秒
 
 var testTimerCnt uint64 = 10000
 var cbChan chan interface{} = make(chan interface{}, testTimerCnt)

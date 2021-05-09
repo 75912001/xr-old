@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"runtime"
 	"strconv"
 	"time"
@@ -24,9 +25,8 @@ func (p *Log) onOutPut() {
 		if p.yyyymmdd != yyyymmdd {
 			p.file.Close()
 			p.yyyymmdd = yyyymmdd
-			logName := p.namePrefix + strconv.Itoa(p.yyyymmdd)
-			logName = genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), fmt.Sprintf("%v", v.second))
-			p.file, err = os.OpenFile(logName, logFileFlag, logFilePerm)
+			logName := genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), genHHMMSS(v.second))
+			p.file, err = os.OpenFile(path.Join(p.absPath, logName), logFileFlag, logFilePerm)
 			if err != nil {
 				fmt.Printf("log onOutPut OpenFile err:%v\n", err)
 				fmt.Printf("log:%v\n", v.data)

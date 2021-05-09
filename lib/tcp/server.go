@@ -28,9 +28,9 @@ type Server struct {
 //rwBuffLen:tcp recv/send 缓冲大小
 //recvPacketMaxLen:最大包长(包头+包体)
 //eventChan:外部传递的事件处理
-func (p *Server) Strat(address string, log *log.Log, rwBuffLen int, recvPacketMaxLen uint32, eventChan chan<- interface{},
+func (p *Server) Strat(address string, log *log.Log, recvPacketMaxLen int, eventChan chan<- interface{},
 	onConn OnConnServerType, onDisconn OnDisConnServerType, onPacket OnPacketServerType, onParseProtoHead OnParseProtoHeadType,
-	sendChanCapacity uint32) (err error) {
+	sendChanCapacity int) (err error) {
 	p.log = log
 	p.OnConn = onConn
 	p.OnPacket = onPacket
@@ -55,7 +55,7 @@ func (p *Server) Strat(address string, log *log.Log, rwBuffLen int, recvPacketMa
 		p.log.Trace("AcceptTCP goroutine start.")
 		defer func() {
 			if err := recover(); err != nil {
-				p.log.Crit(fmt.Sprintf("%v accept goroutine panic:%v", util.GetFuncName(), err))
+				p.log.Crit(fmt.Sprintf("%v accept goroutine panic:%v", util.GetCurrentFuncName(), err))
 			}
 			p.log.Trace("AcceptTCP goroutine exit.")
 		}()
@@ -81,7 +81,7 @@ func (p *Server) Strat(address string, log *log.Log, rwBuffLen int, recvPacketMa
 			}
 			tempDelay = 0
 			//TODO 去掉里面的go read
-			go p.handleConn(conn, rwBuffLen, recvPacketMaxLen, onParseProtoHead, sendChanCapacity)
+			go p.handleConn(conn, recvPacketMaxLen, onParseProtoHead, sendChanCapacity)
 		}
 	}()
 
@@ -113,12 +113,12 @@ func (p *Server) Info() (recvChanCnt, sendChanCnt uint32) {
 	return p.recvChanCnt, p.sendChanCnt
 }
 
-func (p *Server) handleConn(conn *net.TCPConn, rwBuffLen int, recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadType, sendChanCapacity uint32) {
+func (p *Server) handleConn(conn *net.TCPConn, recvPacketMaxLen int, onParseProtoHead OnParseProtoHeadType, sendChanCapacity int) {
 	p.log.Debug(fmt.Sprintf("connection from:%v", conn.RemoteAddr().String()))
 
 	conn.SetNoDelay(true)
-	conn.SetReadBuffer(rwBuffLen)
-	conn.SetWriteBuffer(rwBuffLen)
+	conn.SetReadBuffer(recvPacketMaxLen)
+	conn.SetWriteBuffer(recvPacketMaxLen)
 
 	remote := &Remote{
 		conn:     conn,
