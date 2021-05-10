@@ -5,7 +5,7 @@ package timer
 import (
 	"container/list"
 	"context"
-	"fmt"
+	"log"
 	"sync"
 	"time"
 )
@@ -18,10 +18,11 @@ type TimerMgr struct {
 	secondMutex      sync.Mutex
 	milliSecondMutex sync.Mutex
 	cancelFunc       context.CancelFunc
+	waitGroup        sync.WaitGroup
 }
 
 //OnTimerFun 回调定时器函数(使用协程回调)
-type OnTimerFun func(data interface{}) int
+type OnTimerFun func(arg interface{}) int
 
 //Start scanSecondDuration:扫描秒级定时器, 纳秒间隔(如100000000,则每100毫秒扫描一次秒定时器)
 //Start scanMillisecondDuration:扫描毫秒级定时器, 纳秒间隔(如100000000,则每100毫秒扫描一次毫秒定时器)
@@ -35,19 +36,22 @@ func (p *TimerMgr) Start(ctx context.Context, scanSecondDuration time.Duration, 
 	p.millisecondList = list.New()
 	p.timerOutChan = timerOutChan
 
+	p.waitGroup.Add(2)
+
 	ctxWithCancel, cancelFunc := context.WithCancel(ctx)
 	p.cancelFunc = cancelFunc
 	//每秒更新
 	go func(ctx context.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("timer second goroutine panic:%v\n", err)
+				log.Printf("timer second goroutine panic:%v", err)
 			}
+			p.waitGroup.Done()
 		}()
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("context timer second goroutine done.")
+				log.Printf("context timer second goroutine done.")
 				return
 			case <-time.After(scanSecondDuration * time.Nanosecond):
 				p.secondMutex.Lock()
@@ -61,13 +65,14 @@ func (p *TimerMgr) Start(ctx context.Context, scanSecondDuration time.Duration, 
 	go func(ctx context.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("timer millisecond goroutine painc:%v\n", err)
+				log.Printf("timer millisecond goroutine painc:%v", err)
 			}
+			p.waitGroup.Done()
 		}()
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("context timer millisecond goroutine done.")
+				log.Printf("context timer millisecond goroutine done.")
 				return
 			case <-time.After(scanMillisecondDuration * time.Nanosecond):
 				p.milliSecondMutex.Lock()
@@ -80,42 +85,6 @@ func (p *TimerMgr) Start(ctx context.Context, scanSecondDuration time.Duration, 
 
 func (p *TimerMgr) Exit() {
 	p.cancelFunc()
-}
-
-// AddSecond 添加秒级定时器
-func (p *TimerMgr) AddSecond(cb OnTimerFun, arg interface{}, expire int64) (t *Second) {
-	p.secondMutex.Lock()
-	defer func() {
-		p.secondMutex.Unlock()
-	}()
-
-	return p.addSecond(cb, arg, expire)
-}
-
-// DelSecond 删除秒级定时器
-func DelSecond(t *Second) {
-	t.Millisecond.inValid()
-}
-
-//AddMillisecond 添加毫秒级定时器
-func (p *TimerMgr) AddMillisecond(cb OnTimerFun, arg interface{}, expireMillisecond int64) (t *Millisecond) {
-	t = &Millisecond{
-		Arg:      arg,
-		Function: cb,
-		expire:   expireMillisecond,
-		valid:    true,
-	}
-
-	p.milliSecondMutex.Lock()
-	defer func() {
-		p.milliSecondMutex.Unlock()
-	}()
-
-	p.millisecondList.PushBack(t)
-	return
-}
-
-//DelMillisecond 删除毫秒级定时器
-func DelMillisecond(t *Millisecond) {
-	t.inValid()
+	//等待 second, milliSecond goroutine退出.
+	p.waitGroup.Wait()
 }

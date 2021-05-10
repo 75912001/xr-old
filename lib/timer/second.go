@@ -11,6 +11,21 @@ type Second struct {
 	Millisecond
 }
 
+// AddSecond 添加秒级定时器
+func (p *TimerMgr) AddSecond(cb OnTimerFun, arg interface{}, expire int64) (t *Second) {
+	p.secondMutex.Lock()
+	defer func() {
+		p.secondMutex.Unlock()
+	}()
+
+	return p.addSecond(cb, arg, expire)
+}
+
+// DelSecond 删除秒级定时器(必须与该timerOutChan线性处理.如:在同一个goroutine select中处理数据.)
+func DelSecond(t *Second) {
+	t.Millisecond.inValid()
+}
+
 func (p *TimerMgr) addSecond(cb OnTimerFun, arg interface{}, expire int64) (t *Second) {
 	tvecRootIdx := findTvecRootIdx(expire)
 

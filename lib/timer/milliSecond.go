@@ -14,15 +14,39 @@ type Millisecond struct {
 }
 
 // 判断是否有效
-func (p *Millisecond) IsValid() bool{
+func (p *Millisecond) IsValid() bool {
 	return p.valid
+}
+
+//AddMillisecond 添加毫秒级定时器
+func (p *TimerMgr) AddMillisecond(cb OnTimerFun, arg interface{}, expireMillisecond int64) (t *Millisecond) {
+	t = &Millisecond{
+		Arg:      arg,
+		Function: cb,
+		expire:   expireMillisecond,
+		valid:    true,
+	}
+
+	p.milliSecondMutex.Lock()
+	defer func() {
+		p.milliSecondMutex.Unlock()
+	}()
+
+	p.millisecondList.PushBack(t)
+	return
+}
+
+//DelMillisecond 删除毫秒级定时器(必须与该timerOutChan线性处理.如:在同一个goroutine select中处理数据.)
+func DelMillisecond(t *Millisecond) {
+	t.inValid()
 }
 
 // 设为无效
 func (p *Millisecond) inValid() {
+	p.valid = false
 	p.Arg = nil
 	p.Function = nil
-	p.valid = false
+	p.expire = 0
 }
 
 // 扫描毫秒级定时器

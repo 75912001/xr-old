@@ -17,7 +17,6 @@ done:
 lib/timer
 定时器
     TODO 单元测试
-    TODO 内存逃逸,影响性能.
 
 done:
 lib/log
@@ -34,8 +33,6 @@ lib/addr
 done:
 lib/uitl
 杂货铺
-    TODO 单元测试
-    TODO 内存逃逸,影响性能.
 
 done:
 lib/tcp
