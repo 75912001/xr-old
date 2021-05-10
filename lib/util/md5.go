@@ -8,14 +8,14 @@ import (
 )
 
 //GenMd5 生成md5
-func GenMd5(s *string) (value string) {
+func GenMd5(data []byte) (md5sum string) {
 	md5hash := md5.New()
-	md5hash.Write([]byte(*s))
+	md5hash.Write(data)
 	cipherStr := md5hash.Sum(nil)
 	return hex.EncodeToString(cipherStr)
 }
 
-func MD5File(pathFile string) (ret string, err error) {
+func MD5File(pathFile string) (md5sum string, err error) {
 	f, err := os.Open(pathFile)
 	if err != nil {
 		return
@@ -27,6 +27,6 @@ func MD5File(pathFile string) (ret string, err error) {
 	if err != nil {
 		return
 	}
-	ret = hex.EncodeToString(md5hash.Sum(nil))
+	md5sum = hex.EncodeToString(md5hash.Sum(nil))
 	return
 }

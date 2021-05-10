@@ -35,7 +35,7 @@ type benchJson struct {
 }
 
 func (p *Mgr) Parse(pathFile string) (err error) {
-	err = util.ParseJson(pathFile, &p.Json)
+	err = util.UnmarshalJsonFile(pathFile, &p.Json)
 	if err != nil {
 		return
 	}

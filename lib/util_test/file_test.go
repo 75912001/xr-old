@@ -15,7 +15,8 @@ func TestOverWriteFile(t *testing.T) {
 		t.Errorf("GetCurrentPath err:%v", err)
 	}
 	testPathFile := path.Join(currentPath, fileName)
-	err = util.OverWriteFile(testPathFile, __test_file_content__)
+	data := []byte(__test_file_content__)
+	err = util.OverWriteFile(testPathFile, data)
 	if err != nil {
 		t.Errorf("write file %v err:%v", testPathFile, err)
 	}
@@ -40,7 +41,8 @@ func TestPathFileExists(t *testing.T) {
 	}
 
 	//检测存在的文件
-	err = util.OverWriteFile(testPathFile, __test_file_content__)
+	data := []byte(__test_file_content__)
+	err = util.OverWriteFile(testPathFile, data)
 	if err != nil {
 		t.Errorf("write file %v err:%v", testPathFile, err)
 	}

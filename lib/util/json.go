@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-func ParseJson(pathFile string, v interface{}) (err error) {
+func UnmarshalJsonFile(pathFile string, v interface{}) (err error) {
 	data, err := ioutil.ReadFile(pathFile)
 	if err != nil {
 		return
@@ -18,12 +18,13 @@ func ParseJson(pathFile string, v interface{}) (err error) {
 	return
 }
 
-func SaveJson(pathFile string, v interface{}) (err error) {
-	saveData, err := json.MarshalIndent(v, "", "	")
+func SaveJson(v interface{}, dstPathFile string) (err error) {
+	data, err := json.MarshalIndent(v, "", "	")
 	if err != nil {
 		return
 	}
-	err = OverWriteFile(pathFile, string(saveData))
+
+	err = OverWriteFile(dstPathFile, data)
 	if err != nil {
 		return
 	}

@@ -9,7 +9,26 @@ import (
 	"github.com/75912001/xr/impl/service/common/server"
 )
 
+func t(d2 []byte) {
+	//d2 = append(d2, '1')
+	d2[0] = 'a'
+	d2[1] = 'b'
+	d2[2] = 'c'
+	d2 = d2[1:]
+	log.Print("d2:", d2)
+}
 func main() {
+	{
+		var data []byte
+		data = make([]byte, 8)
+		s := append(data, '1')
+		log.Printf("s:%v\n", s)
+		data[0] = '1'
+		data[1] = '2'
+		data[2] = '3'
+		t(data)
+		log.Print("data:", data)
+	}
 	var err error
 	var server server.Server
 	err = server.Init(handleTcp.OnConnServer, handleTcp.OnDisConnServer, handleTcp.OnPacketServer, handleTcp.OnParseProtoHeadServer)
