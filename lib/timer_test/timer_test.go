@@ -2,10 +2,12 @@ package timer_test
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/75912001/xr/lib/timer"
 )
 
 /*
@@ -15,195 +17,188 @@ import (
 var scanSecondDuration time.Duration = 100000000      //100毫秒
 var scanMillisecondDuration time.Duration = 100000000 //100毫秒
 
-var testTimerCnt uint64 = 10000
-var cbChan chan interface{} = make(chan interface{}, testTimerCnt)
+//最大定时时长
+const MaxSecond int = 9
+const MaxMilliSecond int = 1000
+
+//测试个数
+var testTimerCnt int = 10000
+
+//真实测试个数
+var realTestTimerCnt int
+
+//完成的chan
+var finishChan chan interface{} = make(chan interface{}, testTimerCnt)
 
 //超时事件放置的channel
-var eventChan chan interface{} = make(chan interface{}, testTimerCnt*10)
+var eventChan chan interface{}
 
 func cb(data interface{}) int {
-	cbChan <- data.(*User)
+	user := data.(*User)
+	finishChan <- user
 	return 0
 }
 
 type User struct {
-	ID           uint64
-	pSecond      *Second
-	pMilliSecond *Millisecond
-	tm           *TimerMgr
+	ID           int
+	pSecond      *timer.Second
+	pMilliSecond *timer.Millisecond
+	tm           *timer.TimerMgr
 }
 
-func (p *User) AddSecond() bool {
+func (p *User) AddSecond() {
 	second := time.Now().Unix()
-	p.pSecond = p.tm.AddSecond(cb, p, second+rand.Int63n(10))
+	p.pSecond = p.tm.AddSecond(cb, p, second+int64(rand.Intn(MaxSecond+1)))
 	if rand.Int31n(100) < 20 {
 		p.DelSecond()
-		return false
+		return
 	}
-	return true
+	realTestTimerCnt++
 }
 
 func (p *User) DelSecond() {
-	DelSecond(p.pSecond)
-}
-
-func (p *User) AddMillisecond() bool {
-	n := time.Now()
-	millisecond := n.UnixNano() / 1000000
-
-	p.pMilliSecond = p.tm.AddMillisecond(cb, p, millisecond+rand.Int63n(1000))
-
-	if rand.Int31n(100) < 20 {
-		p.DelMillisecond()
-		return false
-	}
-	return true
-}
-
-func (p *User) DelMillisecond() {
-	DelMillisecond(p.pMilliSecond)
+	timer.DelSecond(p.pSecond)
+	p.pSecond = nil
 }
 
 func TestSecond(t *testing.T) {
-	var trigger int = 0
-	eventChan <- &trigger
+	realTestTimerCnt = 0
+	eventChan = make(chan interface{}, testTimerCnt*10)
+	var waitGroupGoroutineDone sync.WaitGroup
 
-	var waitCnt = testTimerCnt
-	var tm TimerMgr
+	var tm timer.TimerMgr
 	tm.Start(context.Background(), scanSecondDuration, scanMillisecondDuration, eventChan)
 
-	ctxWithCancel, cancelFunc := context.WithCancel(context.Background())
-	go func(ctx context.Context) {
-		fmt.Println("timer second goroutine start.")
+	for i := 0; i < testTimerCnt; i++ {
+		user := &User{
+			ID:           i,
+			pSecond:      nil,
+			pMilliSecond: nil,
+			tm:           &tm,
+		}
+		user.AddSecond()
+	}
+	t.Logf("AddSecond done.")
+
+	waitGroupGoroutineDone.Add(1)
+	go func() {
+		t.Logf("timer second goroutine start.")
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("timer second goroutine painc:%v\n", err)
+				t.Logf("timer second goroutine painc:%v", err)
 			}
-			fmt.Println("timer second goroutine exit.")
+			t.Logf("timer second goroutine exit.")
+			waitGroupGoroutineDone.Done()
 		}()
-		for {
-			select {
-			case <-ctx.Done():
-				fmt.Printf("context %v goroutine done.\n", util.GetFuncName())
-				return
-			case v, ok := <-eventChan:
-				if ok {
-					switch v.(type) {
-					case *int:
-						for i := uint64(0); i < testTimerCnt; i++ {
-							user := &User{
-								ID:           uint64(i),
-								pSecond:      nil,
-								pMilliSecond: nil,
-								tm:           &tm,
-							}
-							if !user.AddSecond() {
-								waitCnt--
-							}
-						}
-						fmt.Println("AddSecond done.")
-					case *Second:
-						v1, ok1 := v.(*Second)
-						if ok1 {
-							if v1.IsValid() {
-								v1.Function(v1.Arg)
-							}
-						}
+		for v := range eventChan {
+			switch v.(type) {
+			case *timer.Second:
+				v1, ok1 := v.(*timer.Second)
+				if ok1 {
+					if v1.IsValid() {
+						v1.Function(v1.Arg)
 					}
 				}
-			default:
-				time.Sleep(time.Millisecond)
-				//fmt.Println("sleep 1 second ...")
 			}
 		}
-	}(ctxWithCancel)
+	}()
 
-	{ //仅用于测试 ...
-		//等待所有timer结束
-		for i := uint64(0); i < waitCnt; i++ {
-			user := <-cbChan
-			pUser := user.(*User)
-			_ = pUser
+	waitCnt := realTestTimerCnt
+
+	//等待所有timer结束
+	for {
+		user := <-finishChan
+		pUser := user.(*User)
+		_ = pUser
+		waitCnt--
+		if waitCnt <= 0 {
+			break
 		}
 	}
-
 	tm.Exit()
-	cancelFunc()
+	close(eventChan)
+	//等待goroutine结束
+	waitGroupGoroutineDone.Wait()
 
-	{ //仅用于测试 ...
-		//	time.Sleep(time.Second * 1)
+	t.Logf("realTestTimerCnt:%v", realTestTimerCnt)
+}
+
+func (p *User) AddMillisecond() {
+	n := time.Now()
+	millisecond := n.UnixNano() / 1000000
+
+	p.pMilliSecond = p.tm.AddMillisecond(cb, p, millisecond+int64(rand.Intn(MaxMilliSecond+1)))
+
+	if rand.Int31n(100) < 20 {
+		p.DelMillisecond()
+		return
 	}
-	fmt.Printf("all timer cnt:%v\n", waitCnt)
+	realTestTimerCnt++
+}
+
+func (p *User) DelMillisecond() {
+	timer.DelMillisecond(p.pMilliSecond)
+	p.pMilliSecond = nil
 }
 
 func TestMillisecond(t *testing.T) {
-	var trigger int = 0
-	eventChan <- &trigger
+	realTestTimerCnt = 0
+	eventChan = make(chan interface{}, testTimerCnt*10)
+	var waitGroupGoroutineDone sync.WaitGroup
 
-	var waitCnt = testTimerCnt
-	var tm TimerMgr
+	var tm timer.TimerMgr
 	tm.Start(context.Background(), scanSecondDuration, scanMillisecondDuration, eventChan)
 
-	ctxWithCancel, cancelFunc := context.WithCancel(context.Background())
-	go func(ctx context.Context) {
-		fmt.Println("timer millisecond goroutine start.")
+	for i := 0; i < testTimerCnt; i++ {
+		user := &User{
+			ID:           i,
+			pSecond:      nil,
+			pMilliSecond: nil,
+			tm:           &tm,
+		}
+		user.AddMillisecond()
+	}
+	t.Logf("AddMillisecond done.")
+
+	waitGroupGoroutineDone.Add(1)
+	go func() {
+		t.Logf("timer Millisecond goroutine start.")
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("timer millisecond goroutine painc:%v\n", err)
+				t.Logf("timer Millisecond goroutine painc:%v", err)
 			}
-			fmt.Println("timer millisecond goroutine exit.")
+			t.Logf("timer Millisecond goroutine exit.")
+			waitGroupGoroutineDone.Done()
 		}()
-		for {
-			select {
-			case <-ctx.Done():
-				fmt.Printf("%v goroutine done.\n", util.GetFuncName())
-				return
-			case v, ok := <-eventChan:
-				if ok {
-					switch v.(type) {
-					case *int:
-						for i := uint64(0); i < testTimerCnt; i++ {
-							user := &User{
-								ID:           uint64(i),
-								pSecond:      nil,
-								pMilliSecond: nil,
-								tm:           &tm,
-							}
-							if !user.AddMillisecond() {
-								waitCnt--
-							}
-						}
-						//fmt.Printf("AddMillisecond done.\n")
-					case *Millisecond:
-						v1, ok1 := v.(*Millisecond)
-						if ok1 {
-							if v1.IsValid() {
-								v1.Function(v1.Arg)
-							}
-						}
+		for v := range eventChan {
+			switch v.(type) {
+			case *timer.Millisecond:
+				v1, ok1 := v.(*timer.Millisecond)
+				if ok1 {
+					if v1.IsValid() {
+						v1.Function(v1.Arg)
 					}
 				}
-			default:
-				time.Sleep(time.Millisecond)
-				//fmt.Printf("sleep 1 second ...\n")
 			}
 		}
-	}(ctxWithCancel)
+	}()
 
-	{ //仅用于测试 ...
-		//等待所有timer结束
-		for i := uint64(0); i < waitCnt; i++ {
-			user := <-cbChan
-			pUser := user.(*User)
-			_ = pUser
+	waitCnt := realTestTimerCnt
+
+	//等待所有timer结束
+	for {
+		user := <-finishChan
+		pUser := user.(*User)
+		_ = pUser
+		waitCnt--
+		if waitCnt <= 0 {
+			break
 		}
 	}
-
 	tm.Exit()
-	cancelFunc()
+	close(eventChan)
+	//等待goroutine结束
+	waitGroupGoroutineDone.Wait()
 
-	{ //仅用于测试 ...
-		//time.Sleep(time.Second * 1)
-	}
-	fmt.Printf("all timer cnt:%v\n", waitCnt)
+	t.Logf("realTestTimerCnt:%v", realTestTimerCnt)
 }
