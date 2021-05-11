@@ -10,7 +10,7 @@
     "__comments__":"0:runtime.NumCPU()",
     "goMaxProcs":8,
     "__comments__":"事件chan数量",
-    "eventChanCnt": 10000,
+    "eventChanCnt": 100000,
 
     "__comments__":"bytes,每个TCP包的最大长度",
     "packetLengthMax": 81920,

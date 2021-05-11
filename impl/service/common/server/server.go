@@ -32,8 +32,7 @@ func (p *Server) Init(onConn tcp.OnConnServerType,
 	onParseProtoHead tcp.OnParseProtoHeadType) (err error) {
 	log.Printf("service Init.")
 
-	nowTimeSec := time.Now().Unix()
-	rand.Seed(nowTimeSec)
+	rand.Seed(time.Now().UnixNano())
 
 	currentPath, err := util.GetCurrentPath()
 	if err != nil {

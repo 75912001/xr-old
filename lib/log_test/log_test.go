@@ -1,8 +1,12 @@
-package log
+package log_test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/75912001/xr/lib/util"
+
+	xrlog "github.com/75912001/xr/lib/log"
 )
 
 /*
@@ -25,11 +29,20 @@ L3 缓存：	6 MB
 ////////////////////////////////////////////////////////////////////////////////
 100W 7.721s=>129516次/s=>130次/ms
 */
-func TestExample(t *testing.T) {
-	var log *Log = new(Log)
-	log.Init("test_log")
 
-	log.SetLevel(LevelOn)
+func TestExample(t *testing.T) {
+	absPath, err := util.GetCurrentPath()
+	if err != nil {
+		t.Errorf("GetCurrentPath err:%v", err)
+	}
+
+	var log *xrlog.Log = new(xrlog.Log)
+	err = log.Init(absPath, "test_log")
+	if err != nil {
+		t.Errorf("log Init err:%v", err)
+	}
+
+	log.SetLevel(xrlog.LevelOn)
 	for i := 0; i < 100000; i++ {
 		log.Trace(fmt.Sprintf("LevelOn trace:%v", 1))
 		log.Debug(fmt.Sprintf("LevelOn debug:%v,%v", "2", 3))
@@ -41,7 +54,7 @@ func TestExample(t *testing.T) {
 		log.Emerg("LevelOn emerg")
 	}
 
-	log.SetLevel(LevelOff)
+	log.SetLevel(xrlog.LevelOff)
 	log.Trace(fmt.Sprintf("LevelOff trace:%v", 1))
 	log.Debug(fmt.Sprintf("LevelOff debug:%v,%v", "2", 3))
 	log.Info("LevelOff info")

@@ -28,8 +28,8 @@ func (p *Log) onOutPut() {
 			logName := genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), genHHMMSS(v.second))
 			p.file, err = os.OpenFile(path.Join(p.absPath, logName), logFileFlag, logFilePerm)
 			if err != nil {
-				fmt.Printf("log onOutPut OpenFile err:%v\n", err)
-				fmt.Printf("log:%v\n", v.data)
+				log.Printf("log onOutPut OpenFile err:%v", err)
+				log.Printf("log:%v", v.data)
 				continue
 			}
 			p.logger = log.New(p.file, "", logFlag)

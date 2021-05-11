@@ -18,24 +18,24 @@ var scanSecondDuration time.Duration = 100000000      //100毫秒
 var scanMillisecondDuration time.Duration = 100000000 //100毫秒
 
 //最大定时时长
-const MaxSecond int = 9
-const MaxMilliSecond int = 1000
+const MaxSecond int = 0
+const MaxMilliSecond int = 0
 
 //测试个数
-var testTimerCnt int = 10000
+var testTimerCnt int = 100000
 
 //真实测试个数
 var realTestTimerCnt int
 
-//完成的chan
-var finishChan chan interface{} = make(chan interface{}, testTimerCnt)
-
 //超时事件放置的channel
 var eventChan chan interface{}
 
-func cb(data interface{}) int {
-	user := data.(*User)
-	finishChan <- user
+var waitCBDone sync.WaitGroup
+
+func cb(arg interface{}) int {
+	user := arg.(*User)
+	_ = user
+	waitCBDone.Done()
 	return 0
 }
 
@@ -49,7 +49,7 @@ type User struct {
 func (p *User) AddSecond() {
 	second := time.Now().Unix()
 	p.pSecond = p.tm.AddSecond(cb, p, second+int64(rand.Intn(MaxSecond+1)))
-	if rand.Int31n(100) < 20 {
+	if rand.Int31n(100) < 50 {
 		p.DelSecond()
 		return
 	}
@@ -62,6 +62,7 @@ func (p *User) DelSecond() {
 }
 
 func TestSecond(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
 	realTestTimerCnt = 0
 	eventChan = make(chan interface{}, testTimerCnt*10)
 	var waitGroupGoroutineDone sync.WaitGroup
@@ -79,6 +80,7 @@ func TestSecond(t *testing.T) {
 		user.AddSecond()
 	}
 	t.Logf("AddSecond done.")
+	waitCBDone.Add(realTestTimerCnt)
 
 	waitGroupGoroutineDone.Add(1)
 	go func() {
@@ -103,18 +105,8 @@ func TestSecond(t *testing.T) {
 		}
 	}()
 
-	waitCnt := realTestTimerCnt
+	waitCBDone.Wait()
 
-	//等待所有timer结束
-	for {
-		user := <-finishChan
-		pUser := user.(*User)
-		_ = pUser
-		waitCnt--
-		if waitCnt <= 0 {
-			break
-		}
-	}
 	tm.Exit()
 	close(eventChan)
 	//等待goroutine结束
@@ -129,7 +121,7 @@ func (p *User) AddMillisecond() {
 
 	p.pMilliSecond = p.tm.AddMillisecond(cb, p, millisecond+int64(rand.Intn(MaxMilliSecond+1)))
 
-	if rand.Int31n(100) < 20 {
+	if rand.Int31n(100) < 50 {
 		p.DelMillisecond()
 		return
 	}
@@ -142,6 +134,7 @@ func (p *User) DelMillisecond() {
 }
 
 func TestMillisecond(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
 	realTestTimerCnt = 0
 	eventChan = make(chan interface{}, testTimerCnt*10)
 	var waitGroupGoroutineDone sync.WaitGroup
@@ -159,6 +152,7 @@ func TestMillisecond(t *testing.T) {
 		user.AddMillisecond()
 	}
 	t.Logf("AddMillisecond done.")
+	waitCBDone.Add(realTestTimerCnt)
 
 	waitGroupGoroutineDone.Add(1)
 	go func() {
@@ -183,18 +177,8 @@ func TestMillisecond(t *testing.T) {
 		}
 	}()
 
-	waitCnt := realTestTimerCnt
+	waitCBDone.Wait()
 
-	//等待所有timer结束
-	for {
-		user := <-finishChan
-		pUser := user.(*User)
-		_ = pUser
-		waitCnt--
-		if waitCnt <= 0 {
-			break
-		}
-	}
 	tm.Exit()
 	close(eventChan)
 	//等待goroutine结束

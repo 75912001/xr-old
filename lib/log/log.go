@@ -54,7 +54,7 @@ func (p *Log) Init(absPath, namePrefix string) (err error) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("log onOutPut goroutine painc:%v\n", err)
+				log.Printf("log onOutPut goroutine painc:%v", err)
 			}
 		}()
 		p.onOutPut()
@@ -65,7 +65,7 @@ func (p *Log) Init(absPath, namePrefix string) (err error) {
 // SetLevel 设置日志等级
 func (p *Log) SetLevel(level int) {
 	if level < LevelOff || LevelOn < level {
-		fmt.Printf("log SetLevel level err:%v\n", level)
+		log.Printf("log SetLevel level err:%v", level)
 		return
 	}
 	p.level = level

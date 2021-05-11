@@ -4,8 +4,8 @@ ongoing:
     单元测试
     内存逃逸,影响性能.
     内存池
-    
-sprints 1:
+
+#sprints 1:
 
 done:
 lib/ec
@@ -16,13 +16,10 @@ lib/ec
 done:
 lib/timer
 定时器
-    TODO 单元测试
 
 done:
 lib/log
 日志
-    TODO 单元测试
-    TODO 内存逃逸,影响性能.
 
 done:
 lib/addr
@@ -39,3 +36,8 @@ lib/tcp
 服务/客户端
     TODO 单元测试
     TODO 内存逃逸,影响性能.
+
+#sprints 2:
+ongoing:
+lib/systimer
+time.Timer 定时器封装
