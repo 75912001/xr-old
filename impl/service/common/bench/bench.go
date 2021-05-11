@@ -3,6 +3,8 @@ package bench
 import (
 	"time"
 
+	"github.com/75912001/xr/lib/addr"
+
 	"github.com/75912001/xr/lib/util"
 )
 
@@ -32,6 +34,8 @@ type benchJson struct {
 		IP   string `json:"ip"`
 		Port string `json:"port"`
 	} `json:"server"`
+
+	AddrMulticast addr.AddrJson `json:"addrMulticast"`
 }
 
 func (p *Mgr) Parse(pathFile string) (err error) {
