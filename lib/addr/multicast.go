@@ -1,41 +1,37 @@
 package addr
 
 import (
-	"fmt"
+	"context"
+	"log"
 	"math/rand"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
-	"github.com/75912001/xr/lib/log"
-	"github.com/75912001/xr/lib/util"
 	"golang.org/x/net/ipv4"
 )
 
-//数据包大小
-const packetMax int = 1024
-
 //multicast 组播
 type multicast struct {
-	conn   *net.UDPConn
-	mcaddr *net.UDPAddr
-	log    *log.Log
+	conn                   *net.UDPConn
+	mcaddr                 *net.UDPAddr
+	cancelFunc             context.CancelFunc
+	waitGroupGoroutineDone sync.WaitGroup
 }
 
 // 运行
-func (p *multicast) start(ip string, port uint16, netName string, log *log.Log, addr *Addr) (err error) {
-	p.log = log
-
+func (p *multicast) start(ctx context.Context, ip string, port uint16, netName string, addr *Addr) (err error) {
 	var strAddr = ip + ":" + strconv.Itoa(int(port))
 	p.mcaddr, err = net.ResolveUDPAddr("udp4", strAddr)
 	if err != nil {
-		p.log.Crit("net.ResolveUDPAddr err:", err)
+		log.Printf("net.ResolveUDPAddr err:%v", err)
 		return err
 	}
 
 	p.conn, err = net.ListenUDP("udp4", p.mcaddr)
 	if err != nil {
-		p.log.Crit("ListenUDP err:", err)
+		log.Printf("ListenUDP err:%v", err)
 		return err
 	}
 
@@ -43,76 +39,97 @@ func (p *multicast) start(ip string, port uint16, netName string, log *log.Log, 
 
 	iface, err := net.InterfaceByName(netName)
 	if err != nil {
-		p.log.Crit("can't find specified interface err:", err)
+		log.Printf("can't find specified interface err:%v", err)
 		return err
 	}
 
-	strAddrIpv4, _ := net.ResolveIPAddr("ip4", ip)
-	err = pc.JoinGroup(iface, strAddrIpv4)
+	network, _ := net.ResolveIPAddr("ip4", ip)
+	err = pc.JoinGroup(iface, network)
 	if nil != err {
-		p.log.Crit("err:", err, strAddrIpv4)
+		log.Printf("err:%v, address::%v", err, network)
 		return err
 	}
 
 	if loop, err := pc.MulticastLoopback(); err == nil {
-		p.log.Trace("MulticastLoopback status:", loop)
+		log.Printf("MulticastLoopback status:%v", loop)
 		if !loop {
 			if err := pc.SetMulticastLoopback(true); err != nil {
-				p.log.Crit("SetMulticastLoopback err:", err)
+				log.Printf("SetMulticastLoopback err:%v", err)
 			}
 		}
 	}
 
+	ctxWithCancel, cancelFunc := context.WithCancel(ctx)
+	p.cancelFunc = cancelFunc
+
+	p.waitGroupGoroutineDone.Add(2)
 	//读
 	go func(addr *Addr) {
 		defer func() {
-			p.conn.Close()
 			if err := recover(); err != nil {
-				p.log.Crit(fmt.Sprintf("%v handleRecv goroutine panic:%v", util.GetFuncName(), err))
+				log.Printf("ReadFromUDP goroutine panic:%v", err)
 			}
+			p.waitGroupGoroutineDone.Done()
 		}()
 
+		//数据包大小
+		const packetMax int = 1024
 		for {
 			recvBuf := make([]byte, packetMax)
 			length, _, err := p.conn.ReadFromUDP(recvBuf)
 			if nil != err {
-				p.log.Crit("handleRecv err:", err)
+				log.Printf("ReadFromUDP err:%v", err)
 				break
 			}
 			recvBuf = recvBuf[0:length]
-			err = addr.parse(recvBuf)
+			err = addr.handleAddrMulticast(recvBuf)
 			if err != nil {
-				p.log.Crit("parse err:", err)
+				log.Printf("handleAddrMulticast err:%v", err)
 			}
 		}
 	}(addr)
 
 	//10-20sec 同步一次
-	go func(addr *Addr) {
+	go func(ctx context.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				p.log.Crit(fmt.Sprintf("%v doAddrSYN goroutine panic:%v", util.GetFuncName(), err))
+				log.Printf("doAddrSYN goroutine panic:%v", err)
 			}
+			p.waitGroupGoroutineDone.Done()
 		}()
-		var bFirst bool = true
+		p.doAddrSYN([]byte(addr.addrFirstBuffer))
 		for {
-			if bFirst {
-				p.doAddrSYN([]byte(addr.addrFirstBuffer))
-				bFirst = false
-			} else {
+			select {
+			case <-ctx.Done():
+				log.Printf("doAddrSYN goroutine ctx done.")
+				return
+			case <-time.After(time.Duration(rand.Intn(10)+10) * time.Second):
 				p.doAddrSYN([]byte(addr.addrBuffer))
 			}
-
-			time.Sleep(time.Duration(rand.Intn(10)+10) * time.Second)
 		}
-	}(addr)
-	return err
+	}(ctxWithCancel)
+	return
+}
+
+func (p *multicast) exit() {
+	//触发ReadFromUDP goroutine 退出
+	if p.conn != nil {
+		p.conn.Close()
+	}
+
+	//触发doAddrSYN goroutine 退出
+	if p.cancelFunc != nil {
+		p.cancelFunc()
+		p.waitGroupGoroutineDone.Wait()
+	}
+
+	p.conn = nil
 }
 
 func (p *multicast) doAddrSYN(data []byte) {
 	_, err := p.conn.WriteToUDP(data, p.mcaddr)
 
 	if nil != err {
-		p.log.Error("doAddrSYN err:", err)
+		log.Printf("doAddrSYN err:%v, %v", err, data)
 	}
 }

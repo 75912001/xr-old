@@ -24,8 +24,6 @@ lib/log
 done:
 lib/addr
 通过组播,完成服务发现功能.
-    TODO 单元测试
-    TODO 内存逃逸,影响性能.
     
 done:
 lib/uitl
@@ -38,6 +36,12 @@ lib/tcp
     TODO 内存逃逸,影响性能.
 
 #sprints 2:
+服务之间tcp连接
+
+google protobuf 通讯
+
+
+#sprints ...:
 ongoing:
 lib/systimer
 time.Timer 定时器封装

@@ -1,45 +1,42 @@
 package addr
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
-
-	"github.com/75912001/xr/lib/log"
+	"log"
 )
 
 //TODO [improvement] 移除 服务信息
 
 //会收到除了自己的组播信息
-type OnAddrType func(name string, id uint32, ip string, port uint16, data string) int
+type OnAddrFunc func(name string, id uint32, ip string, port uint16, data string) int
 
 //添加组播事件
 type AddrEvent struct {
 	Addr     *Addr
-	AddrJson addrJson
+	AddrJson AddrJson
 }
 
 type Addr struct {
-	OnAddr          OnAddrType
+	OnAddr          OnAddrFunc
 	addrChan        chan<- interface{} //服务处理的事件
-	log             *log.Log
-	serverMap       serverNameMap //服务器地址信息
-	addrFirstBuffer string        //同步的服务器地址信息(发送数据)标记第一次发送数据
-	addrBuffer      string        //同步的服务器地址信息(发送数据)
-	selfAddr        addrJson      //自己服务器地址信息
+	serverMap       serverNameMap      //服务器地址信息
+	addrFirstBuffer string             //同步的服务器地址信息(发送数据)标记第一次发送数据
+	addrBuffer      string             //同步的服务器地址信息(发送数据)
+	selfAddr        AddrJson           //自己服务器地址信息
 	multicast       multicast
 }
 
 //multicastIP:239.0.0.8
 //multicastPort:8890
 //netName:eth0
-func (p *Addr) Start(log *log.Log, eventChan chan<- interface{}, onAddr OnAddrType,
+func (p *Addr) Start(eventChan chan<- interface{}, onAddrFunc OnAddrFunc,
 	multicastIP string, multicastPort uint16, netName string,
 	addrName string, addrID uint32, addrIP string, addrPort uint16, addrData string) (err error) {
 	p.serverMap = make(serverNameMap)
 
-	p.log = log
 	p.addrChan = eventChan
-	p.OnAddr = onAddr
+	p.OnAddr = onAddrFunc
 
 	p.selfAddr.Cmd = 0
 	p.selfAddr.Name = addrName
@@ -52,7 +49,7 @@ func (p *Addr) Start(log *log.Log, eventChan chan<- interface{}, onAddr OnAddrTy
 	{
 		data, err := json.Marshal(aj)
 		if err != nil {
-			p.log.Crit("json Marshal err:", err)
+			log.Printf("json Marshal err:%v", err)
 			return err
 		}
 		p.addrFirstBuffer = string(data)
@@ -61,18 +58,22 @@ func (p *Addr) Start(log *log.Log, eventChan chan<- interface{}, onAddr OnAddrTy
 		aj.Cmd = 1
 		data, err := json.Marshal(aj)
 		if err != nil {
-			p.log.Crit("json Marshal err:", err)
+			log.Printf("json Marshal err:%v", err)
 			return err
 		}
 		p.addrBuffer = string(data)
 	}
 
-	err = p.multicast.start(multicastIP, multicastPort, netName, p.log, p)
+	err = p.multicast.start(context.Background(), multicastIP, multicastPort, netName, p)
 	if err != nil {
-		p.log.Crit("multicast start err:", err)
+		log.Printf("multicast start err:%v", err)
 		return err
 	}
 	return
+}
+
+func (p *Addr) Exit() {
+	p.multicast.exit()
 }
 
 /*
@@ -87,7 +88,7 @@ func (p *Addr) Start(log *log.Log, eventChan chan<- interface{}, onAddr OnAddrTy
 }
 */
 
-type addrJson struct {
+type AddrJson struct {
 	//cmd:[0,第一次发送]
 	//[1,平时发送]
 	Cmd  uint32 `json:"cmd"`
@@ -98,11 +99,11 @@ type addrJson struct {
 	Data string `json:"data"`
 }
 
-func (p *Addr) parse(data []byte) (err error) {
-	var aj addrJson
+func (p *Addr) handleAddrMulticast(data []byte) (err error) {
+	var aj AddrJson
 	err = json.Unmarshal(data, &aj)
 	if err != nil {
-		p.log.Crit(fmt.Sprintf("json Marshal err:%v, data:%v", err, data))
+		log.Printf("json Marshal err:%v, data:%v", err, data)
 		return
 	}
 	if p.selfAddr.Name != aj.Name && p.selfAddr.ID != aj.ID {
@@ -124,11 +125,11 @@ func (p *Addr) parse(data []byte) (err error) {
 	return
 }
 
-type serverIDMap map[uint32]addrJson
+type serverIDMap map[uint32]AddrJson
 type serverNameMap map[string]serverIDMap
 
 //添加到内存中
-func (p *Addr) add(name string, id uint32, aj *addrJson) {
+func (p *Addr) add(name string, id uint32, aj *AddrJson) {
 	_, valid := p.serverMap[name]
 	if valid {
 		p.serverMap[name][id] = *aj
@@ -139,7 +140,7 @@ func (p *Addr) add(name string, id uint32, aj *addrJson) {
 	}
 }
 
-func (p *Addr) find(name string, id uint32) (aj *addrJson) {
+func (p *Addr) find(name string, id uint32) (aj *AddrJson) {
 	value, valid := p.serverMap[name]
 	if valid {
 		value2, valid2 := value[id]
