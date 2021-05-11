@@ -13,9 +13,9 @@ import (
 )
 
 type Server struct {
-	OnConn      OnConnServerType
-	OnPacket    OnPacketServerType
-	OnDisConn   OnDisConnServerType
+	OnConn      OnConnServerFunc
+	OnPacket    OnPacketServerFunc
+	OnDisConn   OnDisConnServerFunc
 	tcpChan     chan<- interface{}
 	listener    *net.TCPListener
 	recvChanCnt uint32
@@ -29,7 +29,7 @@ type Server struct {
 //recvPacketMaxLen:最大包长(包头+包体)
 //eventChan:外部传递的事件处理
 func (p *Server) Strat(address string, log *log.Log, recvPacketMaxLen int, eventChan chan<- interface{},
-	onConn OnConnServerType, onDisconn OnDisConnServerType, onPacket OnPacketServerType, onParseProtoHead OnParseProtoHeadType,
+	onConn OnConnServerFunc, onDisconn OnDisConnServerFunc, onPacket OnPacketServerFunc, onParseProtoHead OnParseProtoHeadFunc,
 	sendChanCapacity int) (err error) {
 	p.log = log
 	p.OnConn = onConn
@@ -113,7 +113,7 @@ func (p *Server) Info() (recvChanCnt, sendChanCnt uint32) {
 	return p.recvChanCnt, p.sendChanCnt
 }
 
-func (p *Server) handleConn(conn *net.TCPConn, recvPacketMaxLen int, onParseProtoHead OnParseProtoHeadType, sendChanCapacity int) {
+func (p *Server) handleConn(conn *net.TCPConn, recvPacketMaxLen int, onParseProtoHead OnParseProtoHeadFunc, sendChanCapacity int) {
 	p.log.Debug(fmt.Sprintf("connection from:%v", conn.RemoteAddr().String()))
 
 	conn.SetNoDelay(true)

@@ -19,7 +19,8 @@ const (
 	ECInvPointer
 	ECUnknown
 	ECNonExistent
-	ECMAX = 0xff
+	ECMAX
+	//0xff
 )
 
 // defines error information

@@ -10,8 +10,8 @@ import (
 
 //己方作为客户端
 type Client struct {
-	OnPacket  OnPacketClientType
-	OnDisConn OnDisConnClientType
+	OnPacket  OnPacketClientFunc
+	OnDisConn OnDisConnClientFunc
 	Remote    Remote
 	tcpChan   chan<- interface{}
 	log       *log.Log
@@ -26,7 +26,7 @@ type Client struct {
 //eventChan:外部传递的事件处理管道.连接的事件会放入该管道,以供外部处理
 //sendChanCapacity:发送管道容量
 func (p *Client) Connect(address string, log *log.Log, rwBuffLen int, recvPacketMaxLen uint32, eventChan chan<- interface{},
-	onDisConn OnDisConnClientType, onPacket OnPacketClientType, onParseProtoHead OnParseProtoHeadType,
+	onDisConn OnDisConnClientFunc, onPacket OnPacketClientFunc, onParseProtoHead OnParseProtoHeadFunc,
 	sendChanCapacity uint32) (err error) {
 	log.Trace(fmt.Sprintf("address:%v, recvPacketMaxLen:%v, eventChan:%v,  onDisConn:%v, onPacket:%v, onParseProtoHead:%v, sendChanCapacity:%v",
 		address, recvPacketMaxLen, eventChan, onDisConn, onPacket, onParseProtoHead, sendChanCapacity))
@@ -84,7 +84,7 @@ func (p *Client) DisConn() (err error) {
 }
 
 //接收数据
-func (p *Client) onRecvEvent(recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadType) {
+func (p *Client) onRecvEvent(recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadFunc) {
 	p.log.Trace("goroutine start.")
 
 	defer func() { //断开链接
@@ -124,9 +124,10 @@ func (p *Client) onRecvEvent(recvPacketMaxLen uint32, onParseProtoHead OnParsePr
 			//接受数据
 			pes := &PacketEventClient{
 				Client: p,
-				Data:   make([]byte, packetLength),
+				//Data:    make([]byte, packetLength),
+				Data:   buf[:packetLength],//TODO 测试1 ...
 			}
-			copy(pes.Data, buf[:packetLength])
+			//TODO 测试1 ... copy(pes.Data, buf[:packetLength])
 			p.tcpChan <- pes
 
 			copy(buf, buf[packetLength:readIndex])

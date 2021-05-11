@@ -26,10 +26,10 @@ type Server struct {
 	eventChan  chan interface{}
 }
 
-func (p *Server) Init(onConn tcp.OnConnServerType,
-	onDisconn tcp.OnDisConnServerType,
-	onPacket tcp.OnPacketServerType,
-	onParseProtoHead tcp.OnParseProtoHeadType) (err error) {
+func (p *Server) Init(onConn tcp.OnConnServerFunc,
+	onDisconn tcp.OnDisConnServerFunc,
+	onPacket tcp.OnPacketServerFunc,
+	onParseProtoHead tcp.OnParseProtoHeadFunc) (err error) {
 	log.Printf("service Init.")
 
 	rand.Seed(time.Now().UnixNano())

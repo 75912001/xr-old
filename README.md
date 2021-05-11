@@ -1,39 +1,40 @@
 # xr
 draft:
+
 ongoing:
+
     单元测试
     内存逃逸,影响性能.
     内存池
 
 #sprints 1:
 
-done:
+~~done:
 lib/ec
-错误码
-    TODO 单元测试
-    TODO 内存逃逸,影响性能.
+错误码~~
 
-done:
+~~done:
 lib/timer
-定时器
+定时器~~
 
-done:
+~~done:
 lib/log
-日志
+日志~~
 
-done:
+~~done:
 lib/addr
-通过组播,完成服务发现功能.
+通过组播,完成服务发现功能.~~
     
-done:
+~~done:
 lib/uitl
-杂货铺
+杂货铺~~
 
 done:
 lib/tcp
 服务/客户端
     TODO 单元测试
     TODO 内存逃逸,影响性能.
+    测试完毕后,去掉日志.使用系统 log
 
 #sprints 2:
 服务之间tcp连接

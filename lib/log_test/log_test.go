@@ -35,7 +35,7 @@ func TestExample(t *testing.T) {
 	if err != nil {
 		t.Errorf("GetCurrentPath err:%v", err)
 	}
-
+	t.Logf("absPath:%v", absPath)
 	var log *xrlog.Log = new(xrlog.Log)
 	err = log.Init(absPath, "test_log")
 	if err != nil {
