@@ -54,6 +54,7 @@ func (p *Log) levelFunc(level int, v ...interface{}) {
 	funName := runtime.FuncForPC(pc).Name()
 	var strLine = strconv.Itoa(line)
 	second := time.Now().Unix()
+
 	p.logChan <- &logData{
 		second: second,
 		data:   "[" + levelTag[level] + "][" + file + "][" + funName + "][" + strLine + "]" + fmt.Sprintln(v...),

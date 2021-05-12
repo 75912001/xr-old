@@ -10,7 +10,7 @@ import (
 
 var eventChan = make(chan interface{}, 10000)
 
-func OnAddrMulticastType(name string, id uint32, ip string, port uint16, data string) int {
+func OnAddr(name string, id uint32, ip string, port uint16, data string) int {
 	log.Printf("name:%v, id:%v, ip:%v, port:%v, data:%v", name, id, ip, port, data)
 	return 0
 }
@@ -31,10 +31,9 @@ func handleEvent() {
 }
 
 func TestAddr(t *testing.T) {
-
 	var a addr.Addr
 
-	err := a.Start(eventChan, OnAddrMulticastType, "239.0.0.8", 8890, "Wi-Fi",
+	err := a.Start(eventChan, OnAddr, "239.0.0.8", 8890, "Wi-Fi",
 		"testService", 1, "127.0.0.1", 8899, "this is data.")
 	if err != nil {
 		t.Fatalf("addr multicase err:%v", err)

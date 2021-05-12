@@ -47,7 +47,7 @@ func TestExample(t *testing.T) {
 	}
 
 	log.SetLevel(xrlog.LevelOn)
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10000; i++ {
 		log.Trace(fmt.Sprintf("LevelOn trace:%v", 1))
 		log.Debug(fmt.Sprintf("LevelOn debug:%v,%v", "2", 3))
 		log.Info("LevelOn info")

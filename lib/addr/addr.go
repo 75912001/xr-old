@@ -1,7 +1,6 @@
 package addr
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 )
@@ -30,13 +29,13 @@ type Addr struct {
 //multicastIP:239.0.0.8
 //multicastPort:8890
 //netName:eth0
-func (p *Addr) Start(eventChan chan<- interface{}, onAddrFunc OnAddrFunc,
+func (p *Addr) Start(addrChan chan<- interface{}, onAddr OnAddrFunc,
 	multicastIP string, multicastPort uint16, netName string,
 	addrName string, addrID uint32, addrIP string, addrPort uint16, addrData string) (err error) {
 	p.serverMap = make(serverNameMap)
 
-	p.addrChan = eventChan
-	p.OnAddr = onAddrFunc
+	p.addrChan = addrChan
+	p.OnAddr = onAddr
 
 	p.selfAddr.Cmd = 0
 	p.selfAddr.Name = addrName
@@ -64,7 +63,7 @@ func (p *Addr) Start(eventChan chan<- interface{}, onAddrFunc OnAddrFunc,
 		p.addrBuffer = string(data)
 	}
 
-	err = p.multicast.start(context.Background(), multicastIP, multicastPort, netName, p)
+	err = p.multicast.start(multicastIP, multicastPort, netName, p)
 	if err != nil {
 		log.Printf("multicast start err:%v", err)
 		return err
@@ -106,6 +105,7 @@ func (p *Addr) handleAddrMulticast(data []byte) (err error) {
 		log.Printf("json Marshal err:%v, data:%v", err, data)
 		return
 	}
+	//判断 名称 && id 不等
 	if p.selfAddr.Name != aj.Name && p.selfAddr.ID != aj.ID {
 		if 0 == aj.Cmd {
 			p.multicast.doAddrSYN([]byte(p.addrBuffer))

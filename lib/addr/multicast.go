@@ -21,7 +21,7 @@ type multicast struct {
 }
 
 // 运行
-func (p *multicast) start(ctx context.Context, ip string, port uint16, netName string, addr *Addr) (err error) {
+func (p *multicast) start(ip string, port uint16, netName string, addr *Addr) (err error) {
 	var strAddr = ip + ":" + strconv.Itoa(int(port))
 	p.mcaddr, err = net.ResolveUDPAddr("udp4", strAddr)
 	if err != nil {
@@ -59,10 +59,8 @@ func (p *multicast) start(ctx context.Context, ip string, port uint16, netName s
 		}
 	}
 
-	ctxWithCancel, cancelFunc := context.WithCancel(ctx)
-	p.cancelFunc = cancelFunc
-
 	p.waitGroupGoroutineDone.Add(2)
+
 	//读
 	//当 conn 关闭, 该函数会引发 panic ...
 	go func(addr *Addr) {
@@ -89,6 +87,10 @@ func (p *multicast) start(ctx context.Context, ip string, port uint16, netName s
 			}
 		}
 	}(addr)
+
+	ctx := context.Background()
+	ctxWithCancel, cancelFunc := context.WithCancel(ctx)
+	p.cancelFunc = cancelFunc
 
 	//10-20sec 同步一次
 	go func(ctx context.Context) {
