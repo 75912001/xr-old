@@ -1,8 +1,10 @@
 # xr
+
 draft:
 
 ongoing:
-
+    
+    使用context之前,创建完毕cancelFunc, ctx.
     单元测试
     内存逃逸,影响性能.
     内存池

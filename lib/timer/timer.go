@@ -27,7 +27,7 @@ type OnTimerFun func(arg interface{}) int
 //Start scanSecondDuration:扫描秒级定时器, 纳秒间隔(如100000000,则每100毫秒扫描一次秒定时器)
 //Start scanMillisecondDuration:扫描毫秒级定时器, 纳秒间隔(如100000000,则每100毫秒扫描一次毫秒定时器)
 //timerOutChan 是超时事件放置的channel,由外部传入(处理定时器相关数据,必须与该timerOutChan线性处理.如:在同一个goroutine select中处理数据.)
-func (p *TimerMgr) Start(ctx context.Context, scanSecondDuration time.Duration, scanMillisecondDuration time.Duration,
+func (p *TimerMgr) Start(scanSecondDuration time.Duration, scanMillisecondDuration time.Duration,
 	timerOutChan chan<- interface{}) {
 	for idx := range p.secondVec {
 		p.secondVec[idx] = &tvecRoot{}
@@ -38,6 +38,7 @@ func (p *TimerMgr) Start(ctx context.Context, scanSecondDuration time.Duration, 
 
 	p.waitGroup.Add(2)
 
+	ctx := context.Background()
 	ctxWithCancel, cancelFunc := context.WithCancel(ctx)
 	p.cancelFunc = cancelFunc
 	//每秒更新

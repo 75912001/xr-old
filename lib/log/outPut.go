@@ -18,12 +18,14 @@ type logData struct {
 // 写日志
 func (p *Log) onOutPut() {
 	var err error
-	defer p.waitGroup.Done()
-
 	for v := range p.logChan {
 		yyyymmdd := genYYYYMMDD(v.second)
 		if p.yyyymmdd != yyyymmdd {
-			p.file.Close()
+			if p.file != nil {
+				p.file.Close()
+				p.file = nil
+			}
+
 			p.yyyymmdd = yyyymmdd
 			logName := genLogName(p.namePrefix, fmt.Sprintf("%v", p.yyyymmdd), genHHMMSS(v.second))
 			p.file, err = os.OpenFile(path.Join(p.absPath, logName), logFileFlag, logFilePerm)
@@ -39,9 +41,14 @@ func (p *Log) onOutPut() {
 }
 
 // 路径,文件名,行数,函数名称
-func (p *Log) outPut(calldepth int, prefix *string, str *string) {
-	pc, file, line, ok := runtime.Caller(calldepth)
+func (p *Log) levelFunc(level int, v ...interface{}) {
+	if p.level < level {
+		return
+	}
+
+	pc, file, line, ok := runtime.Caller(2)
 	if !ok {
+		log.Printf("runtime.Caller err.")
 		return
 	}
 	funName := runtime.FuncForPC(pc).Name()
@@ -49,6 +56,6 @@ func (p *Log) outPut(calldepth int, prefix *string, str *string) {
 	second := time.Now().Unix()
 	p.logChan <- &logData{
 		second: second,
-		data:   "[" + *prefix + "][" + file + "][" + funName + "][" + strLine + "]" + *str,
+		data:   "[" + levelTag[level] + "][" + file + "][" + funName + "][" + strLine + "]" + fmt.Sprintln(v...),
 	}
 }

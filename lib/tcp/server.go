@@ -152,3 +152,61 @@ func (p *Server) handleConn(conn *net.TCPConn, recvPacketMaxLen int, onParseProt
 		p.onRecvEventChan(remote, recvPacketMaxLen, onParseProtoHead)
 	}()
 }
+
+//接收数据
+func (p *Server) onRecvEventChan(remote *Remote, recvPacketMaxLen int, onParseProtoHead OnParseProtoHeadFunc) {
+	p.log.Trace("goroutine start.")
+
+	defer func() {
+		if err := recover(); err != nil {
+			p.log.Warn(fmt.Sprintf("goroutine panic:%v", err))
+		} else { //断开链接
+			p.tcpChan <- &DisConnEventServer{
+				Server: p,
+				Remote: remote,
+			}
+		}
+		p.log.Trace("goroutine done.")
+	}()
+
+	//TODO [improvement] 环形缓冲
+	buf := make([]byte, recvPacketMaxLen)
+
+	var readIndex int
+	for {
+	LoopRead:
+		readNum, err := remote.conn.Read(buf[readIndex:])
+		if nil != err {
+			p.log.Error(fmt.Sprintf("Conn.Read, read num:%v, err:%v", readNum, err))
+			return
+		}
+		readIndex += readNum
+		for {
+			packetLength := onParseProtoHead(buf, readIndex)
+			if 0 == packetLength {
+				goto LoopRead
+			}
+
+			if -1 == packetLength {
+				p.log.Crit(fmt.Sprintf("packetLength:%v, readIndex:%v, Data:%v", packetLength, readIndex, buf))
+				return
+			}
+
+			//接受数据
+			pes := &PacketEventServer{
+				Server: p,
+				Data:   make([]byte, packetLength),
+				Remote: remote,
+			}
+			copy(pes.Data, buf[:packetLength])
+			p.tcpChan <- pes
+
+			copy(buf, buf[packetLength:readIndex])
+			readIndex -= packetLength
+
+			if 0 == readIndex {
+				goto LoopRead
+			}
+		}
+	}
+}

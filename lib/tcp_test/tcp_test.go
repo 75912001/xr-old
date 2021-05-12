@@ -2,10 +2,13 @@ package tcp_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/75912001/xr/lib/addrmulticase"
+	"github.com/75912001/xr/lib/addr"
+
+	"github.com/75912001/xr/lib/util"
 
 	"github.com/75912001/xr/lib/log"
 	"github.com/75912001/xr/lib/tcp"
@@ -15,8 +18,14 @@ var eventChan = make(chan interface{}, 10000)
 var GLog *log.Log
 
 func init() {
+	absPath, err := util.GetCurrentPath()
+	if err != nil {
+		os.Exit(1)
+	}
+
 	GLog = new(log.Log)
-	GLog.Init("test_log")
+
+	GLog.Init(absPath, "test_log")
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +95,7 @@ func handleEvent() {
 				GLog.Debug(fmt.Sprintf("DisConnEventServer, remote:%v", vv.Remote))
 				vv.Server.OnDisConn(vv.Remote)
 				if vv.Remote.IsConn() {
-					vv.Remote.Close()
+					vv.Remote.Stop()
 				}
 			}
 		case *tcp.PacketEventServer:
@@ -104,7 +113,7 @@ func handleEvent() {
 				GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
 				vv.Client.OnDisConn(vv.Client)
 				if vv.Client.Remote.IsConn() {
-					vv.Client.Remote.Close()
+					vv.Client.Remote.Stop()
 				}
 			}
 		case *tcp.PacketEventClient:
@@ -116,7 +125,7 @@ func handleEvent() {
 				vv.Client.OnPacket(vv.Client, vv.Data)
 			}
 		//addrMulticase
-		case *addrmulticase.AddrMulticast:
+		case *addr.AddrEvent:
 
 		default:
 			GLog.Crit(fmt.Sprintf("non-existent event:%v", v))

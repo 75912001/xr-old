@@ -14,13 +14,15 @@ const (
 	LevelOn     int = 9 //9 全部打开
 )
 
-var (
-	strEmerg  string = "EME"
-	strCrit   string = "CRI"
-	strError  string = "ERR"
-	strWarn   string = "WAR"
-	strNotice string = "NOT"
-	strInfo   string = "INF"
-	strDebug  string = "GDB"
-	strTrace  string = "TRA"
-)
+var levelTag = []string{
+	LevelOff:    "LevelOff",
+	LevelEmerg:  "EME",
+	LevelCrit:   "CRI",
+	LevelError:  "ERR",
+	LevelWarn:   "WAR",
+	LevelNotice: "NOT",
+	LevelInfo:   "INF",
+	LevelDebug:  "GDB",
+	LevelTrace:  "TRA",
+	LevelOn:     "LevelOn",
+}

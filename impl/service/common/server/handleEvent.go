@@ -25,7 +25,7 @@ func (p *Server) handleEvent() {
 				p.GLog.Debug(fmt.Sprintf("DisConnEventServer, remote:%v", vv.Remote))
 				vv.Server.OnDisConn(vv.Remote)
 				if vv.Remote.IsConn() {
-					vv.Remote.Close()
+					vv.Remote.Stop()
 				}
 			}
 		case *tcp.PacketEventServer:
@@ -43,7 +43,7 @@ func (p *Server) handleEvent() {
 				p.GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
 				vv.Client.OnDisConn(vv.Client)
 				if vv.Client.Remote.IsConn() {
-					vv.Client.Remote.Close()
+					vv.Client.Remote.Stop()
 				}
 			}
 		case *tcp.PacketEventClient:

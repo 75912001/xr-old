@@ -10,8 +10,8 @@ func Send(remote *Remote, data []byte) (err error) {
 		return errors.New("[ERROR]link disconnect.")
 	}
 	remote.sendChan <- &sendEvent{
-		data: data,
-		dst:  remote,
+		data:   data,
+		remote: remote,
 	}
 	return
 }

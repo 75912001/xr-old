@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -50,6 +51,8 @@ func (p *Client) Connect(address string, log *log.Log, rwBuffLen int, recvPacket
 	p.Remote.conn.SetWriteBuffer(rwBuffLen)
 
 	p.Remote.sendChan = make(chan interface{}, sendChanCapacity)
+
+	p.Remote.Start(context.Background())
 
 	go func() {
 		defer func() {
@@ -125,7 +128,7 @@ func (p *Client) onRecvEvent(recvPacketMaxLen uint32, onParseProtoHead OnParsePr
 			pes := &PacketEventClient{
 				Client: p,
 				//Data:    make([]byte, packetLength),
-				Data:   buf[:packetLength],//TODO 测试1 ...
+				Data: buf[:packetLength], //TODO 测试1 ...
 			}
 			//TODO 测试1 ... copy(pes.Data, buf[:packetLength])
 			p.tcpChan <- pes

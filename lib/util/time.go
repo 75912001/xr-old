@@ -22,5 +22,5 @@ type TimeMgr struct {
 func (p *TimeMgr) Update() {
 	t := time.Now()
 	p.Second = t.Unix()
-	p.Millisecond = t.UnixNano() / 1000000
+	p.Millisecond = t.UnixNano() / int64(time.Millisecond)
 }

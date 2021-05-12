@@ -64,6 +64,7 @@ func (p *multicast) start(ctx context.Context, ip string, port uint16, netName s
 
 	p.waitGroupGoroutineDone.Add(2)
 	//读
+	//当 conn 关闭, 该函数会引发 panic ...
 	go func(addr *Addr) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -74,15 +75,15 @@ func (p *multicast) start(ctx context.Context, ip string, port uint16, netName s
 
 		//数据包大小
 		const packetMax int = 1024
+		recvBuf := make([]byte, packetMax)
 		for {
-			recvBuf := make([]byte, packetMax)
 			length, _, err := p.conn.ReadFromUDP(recvBuf)
 			if nil != err {
 				log.Printf("ReadFromUDP err:%v", err)
 				break
 			}
-			recvBuf = recvBuf[0:length]
-			err = addr.handleAddrMulticast(recvBuf)
+			buf := recvBuf[0:length]
+			err = addr.handleAddrMulticast(buf)
 			if err != nil {
 				log.Printf("handleAddrMulticast err:%v", err)
 			}

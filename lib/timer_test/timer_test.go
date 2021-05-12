@@ -1,7 +1,6 @@
 package timer_test
 
 import (
-	"context"
 	"math/rand"
 	"sync"
 	"testing"
@@ -68,7 +67,7 @@ func TestSecond(t *testing.T) {
 	var waitGroupGoroutineDone sync.WaitGroup
 
 	var tm timer.TimerMgr
-	tm.Start(context.Background(), scanSecondDuration, scanMillisecondDuration, eventChan)
+	tm.Start(scanSecondDuration, scanMillisecondDuration, eventChan)
 
 	for i := 0; i < testTimerCnt; i++ {
 		user := &User{
@@ -140,7 +139,7 @@ func TestMillisecond(t *testing.T) {
 	var waitGroupGoroutineDone sync.WaitGroup
 
 	var tm timer.TimerMgr
-	tm.Start(context.Background(), scanSecondDuration, scanMillisecondDuration, eventChan)
+	tm.Start(scanSecondDuration, scanMillisecondDuration, eventChan)
 
 	for i := 0; i < testTimerCnt; i++ {
 		user := &User{

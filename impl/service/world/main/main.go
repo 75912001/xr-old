@@ -19,15 +19,64 @@ func t(d2 []byte) {
 }
 func main() {
 	{
-		var data []byte
-		data = make([]byte, 8)
-		s := append(data, '1')
-		log.Printf("s:%v\n", s)
-		data[0] = '1'
-		data[1] = '2'
-		data[2] = '3'
-		t(data)
-		log.Print("data:", data)
+		var d1 []byte
+		d1 = make([]byte, 4)
+		d1[0] = '1'
+		d1[1] = '2'
+		d1[2] = '3'
+		d1[3] = '4'
+
+		d2 := d1[0:2]
+		d1 = d1[0:2]
+		d1 = append(d1, 'v')
+
+		log.Printf("%v,%v", d1, d2)
+		d1[0] = 'a'
+		d1[1] = 'b'
+		d1[2] = 'c'
+		d1[3] = 'd'
+		log.Printf("%v,%v", d1, d2)
+	}
+	{
+		var c chan int
+		c = make(chan int, 10)
+		c <- 1
+		c <- 2
+		close(c)
+		//c = nil
+		//for v := range c {
+		//	log.Printf("%v", v)
+		//
+		//}
+
+		for {
+			log.Printf("")
+			select {
+			case v, ok := <-c:
+				log.Printf("%v,%v", v, ok)
+				break
+			}
+		}
+	}
+	{
+		var d1 []byte
+		d1 = make([]byte, 4)
+		d1[0] = '1'
+		d1[1] = '2'
+		d1[2] = '3'
+
+		d2 := d1
+		log.Printf("d1:%v, d2:%v", d1, d2)
+
+		d1[1] = 'a'
+		log.Printf("d1:%v, d2:%v", d1, d2)
+		//s := append(data, '1')
+		//log.Printf("s:%v\n", s)
+		//data[0] = '1'
+		//data[1] = '2'
+		//data[2] = '3'
+		//t(data)
+		//log.Print("data:", data)
 	}
 	var err error
 	var server server.Server
