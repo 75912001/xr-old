@@ -114,7 +114,7 @@ func (p *multicast) start(ip string, port uint16, netName string, addr *Addr) (e
 	return
 }
 
-func (p *multicast) exit() {
+func (p *multicast) stop() {
 	//触发ReadFromUDP goroutine 退出
 	if p.conn != nil {
 		p.conn.Close()

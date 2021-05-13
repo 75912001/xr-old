@@ -96,10 +96,10 @@ func (p *Server) Init(onConn tcp.OnConnServerFunc,
 	return
 }
 
-func (p *Server) Exit() (err error) {
-	p.TimerMgr.Exit()
-	p.TcpService.Exit()
-	p.GLog.Exit()
+func (p *Server) Stop() (err error) {
+	p.TimerMgr.Stop()
+	p.TcpService.Stop()
+	p.GLog.Stop()
 
 	return
 }

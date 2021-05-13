@@ -106,7 +106,7 @@ func TestSecond(t *testing.T) {
 
 	waitCBDone.Wait()
 
-	tm.Exit()
+	tm.Stop()
 	close(eventChan)
 	//等待goroutine结束
 	waitGroupGoroutineDone.Wait()
@@ -178,7 +178,7 @@ func TestMillisecond(t *testing.T) {
 
 	waitCBDone.Wait()
 
-	tm.Exit()
+	tm.Stop()
 	close(eventChan)
 	//等待goroutine结束
 	waitGroupGoroutineDone.Wait()

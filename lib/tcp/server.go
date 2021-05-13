@@ -88,8 +88,8 @@ func (p *Server) Strat(address string, log *log.Log, recvPacketMaxLen int, event
 	return
 }
 
-//退出 AcceptTCP
-func (p *Server) Exit() {
+//停止 AcceptTCP
+func (p *Server) Stop() {
 	if p.listener != nil {
 		p.listener.Close()
 		p.listener = nil

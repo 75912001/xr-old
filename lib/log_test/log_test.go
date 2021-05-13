@@ -70,5 +70,5 @@ func TestExample(t *testing.T) {
 
 	//for test coverage
 	log.SetLevel(100)
-	log.Exit()
+	log.Stop()
 }

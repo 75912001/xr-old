@@ -135,7 +135,7 @@ func handleEvent() {
 
 func TestServer(t *testing.T) {
 	defer func() {
-		GLog.Exit()
+		GLog.Stop()
 	}()
 
 	var s tcp.Server
@@ -169,7 +169,7 @@ func TestServer(t *testing.T) {
 
 func TestClient(t *testing.T) {
 	defer func() {
-		GLog.Exit()
+		GLog.Stop()
 	}()
 	go func() {
 		defer func() {

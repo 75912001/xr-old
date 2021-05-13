@@ -60,8 +60,8 @@ func (p *Log) SetLevel(level int) {
 	p.level = level
 }
 
-// 退出
-func (p *Log) Exit() {
+// 停止
+func (p *Log) Stop() {
 	if p.logChan != nil {
 		//close chan, for range 读完chan会退出.
 		close(p.logChan)

@@ -86,7 +86,7 @@ func main() {
 		return
 	}
 	defer func() {
-		server.Exit()
+		server.Stop()
 	}()
 
 	time.Sleep(time.Second * 3)

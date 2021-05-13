@@ -71,8 +71,8 @@ func (p *Addr) Start(addrChan chan<- interface{}, onAddr OnAddrFunc,
 	return
 }
 
-func (p *Addr) Exit() {
-	p.multicast.exit()
+func (p *Addr) Stop() {
+	p.multicast.stop()
 }
 
 /*

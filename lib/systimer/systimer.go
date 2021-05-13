@@ -14,7 +14,7 @@ func (p *SysTimerMgr) Start(timerOutChan chan<- interface{}) {
 	p.timerOutChan = timerOutChan
 }
 
-func (p *SysTimerMgr) Exit() {
+func (p *SysTimerMgr) Stop() {
 	//TODO
 }
 

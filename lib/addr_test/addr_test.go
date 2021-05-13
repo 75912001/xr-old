@@ -50,5 +50,5 @@ func TestAddr(t *testing.T) {
 		handleEvent()
 	}()
 	time.Sleep(time.Second * 5)
-	a.Exit()
+	a.Stop()
 }

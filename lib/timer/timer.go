@@ -84,7 +84,7 @@ func (p *TimerMgr) Start(scanSecondDuration time.Duration, scanMillisecondDurati
 	}(ctxWithCancel)
 }
 
-func (p *TimerMgr) Exit() {
+func (p *TimerMgr) Stop() {
 	p.cancelFunc()
 	//等待 second, milliSecond goroutine退出.
 	p.waitGroup.Wait()
