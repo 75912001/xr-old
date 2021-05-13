@@ -5,49 +5,49 @@ type OnParseProtoHeadFunc func(data []byte, length int) int
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //client
+//数据包事件
+type EventPacketClient struct {
+	Client *Client
+	Data   []byte
+}
+
+//处理数据包事件
+type OnEventPacketClientFunc func(client *Client, data []byte) int
+
 //断开链接事件
-type DisConnEventClient struct {
+type EventDisConnClient struct {
 	Client *Client
 }
 
 //处理断开链接事件
-type OnDisConnClientFunc func(client *Client) int
-
-//数据包事件
-type PacketEventClient struct {
-	Data   []byte
-	Client *Client
-}
-
-//处理数据包事件
-type OnPacketClientFunc func(client *Client, data []byte) int
+type OnEventDisConnClientFunc func(client *Client) int
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //server
 //链接成功事件
-type ConnEventServer struct {
+type EventConnServer struct {
 	Server *Server
 	Remote *Remote
 }
 
 //处理链接成功事件
-type OnConnServerFunc func(remote *Remote) int
+type OnEventConnServerFunc func(remote *Remote) int
+
+//数据包事件
+type EventPacketServer struct {
+	Server *Server
+	Remote *Remote
+	Data   []byte
+}
+
+//处理数据包事件
+type OnEventPacketServerFunc func(remote *Remote, data []byte) int
 
 //断开链接事件
-type DisConnEventServer struct {
+type EventDisConnServer struct {
 	Server *Server
 	Remote *Remote
 }
 
 //处理断开链接事件
-type OnDisConnServerFunc func(remote *Remote) int
-
-//数据包事件
-type PacketEventServer struct {
-	Server *Server
-	Data   []byte
-	Remote *Remote
-}
-
-//处理数据包事件
-type OnPacketServerFunc func(remote *Remote, data []byte) int
+type OnEventDisConnServerFunc func(remote *Remote) int

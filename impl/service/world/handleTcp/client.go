@@ -8,7 +8,7 @@ import (
 
 func OnDisConnClient(client *tcp.Client) int {
 	fmt.Println("OnDisconnClient")
-	if !client.Remote.IsConn() {
+	if !client.IsConn() {
 		//GLog.Warn("duplicate shutdowns")
 		return 0
 	}

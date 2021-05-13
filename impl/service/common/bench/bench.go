@@ -15,13 +15,13 @@ type Mgr struct {
 type benchJson struct {
 	Base struct {
 		ServiceName      string `json:"serviceName"`
-		ServiceID        int    `json:"serviceID"`
-		LogLevel         int    `json:"logLevel"`
+		ServiceID        uint32 `json:"serviceID"`
+		LogLevel         uint32 `json:"logLevel"`
 		LogAbsPath       string `json:"logAbsPath"`
-		GoMaxProcs       int    `json:"goMaxProcs"`
-		EventChanCnt     int    `json:"eventChanCnt"`
-		PacketLengthMax  int    `json:"packetLengthMax"`
-		SendChanCapacity int    `json:"sendChanCapacity"`
+		GoMaxProcs       uint32 `json:"goMaxProcs"`
+		EventChanCnt     uint32 `json:"eventChanCnt"`
+		PacketLengthMax  uint32 `json:"packetLengthMax"`
+		SendChanCapacity uint32 `json:"sendChanCapacity"`
 
 		Comments string `json:"__comments__"`
 	} `json:"base"`

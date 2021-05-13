@@ -124,7 +124,7 @@ func TestSysTimer(t *testing.T) {
 //	}
 //	f := timerFunc(1)
 //	pTimer := time.AfterFunc(0, f)
-//	pTimer.Stop()
+//	pTimer.stop()
 //	for i := 1; i <= testTimerCnt; i++ {
 //		<-eventChan
 //	}

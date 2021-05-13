@@ -1,105 +1,91 @@
 package tcp_test
 
 import (
-	"fmt"
-	"os"
+	"log"
 	"testing"
 	"time"
 
-	"github.com/75912001/xr/lib/addr"
-
-	"github.com/75912001/xr/lib/util"
-
-	"github.com/75912001/xr/lib/log"
 	"github.com/75912001/xr/lib/tcp"
 )
 
 var eventChan = make(chan interface{}, 10000)
-var GLog *log.Log
-
-func init() {
-	absPath, err := util.GetCurrentPath()
-	if err != nil {
-		os.Exit(1)
-	}
-
-	GLog = new(log.Log)
-
-	GLog.Init(absPath, "test_log")
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //server
-func OnConnServer(remote *tcp.Remote) int {
-	//	fmt.Println("OnConnServer")
+func OnParseProtoHeadServer(data []byte, length int) int {
+	//解析协议包头 返回长度:完整包总长度  返回0:不是完整包 返回-1:包错误
+	log.Printf("OnParseProtoHeadServer")
+	return length //len(data)
+}
+
+func OnEventConnServer(remote *tcp.Remote) int {
+	//	log.Printf("OnConnServer")
 	return 0
 }
 
-func OnDisConnServer(remote *tcp.Remote) int {
-	fmt.Println("OnDisconnServer")
+func OnEventDisConnServer(remote *tcp.Remote) int {
+	log.Printf("OnDisconnServer")
 	if !remote.IsConn() {
-		GLog.Warn("duplicate shutdowns")
+		log.Printf("duplicate shutdowns")
 		return 0
 	}
 	return 0
 }
 
 func OnPacketServer(remote *tcp.Remote, data []byte) int {
-	fmt.Println("OnPacketServer")
+	log.Printf("OnPacketServer")
 	return 0
 }
 
-func OnParseProtoHeadServer(data []byte, length int) int {
+func OnEventPacketServer(data []byte, length int) int {
 	//解析协议包头 返回长度:完整包总长度  返回0:不是完整包 返回-1:包错误
-	fmt.Println("OnParseProtoHead")
+	log.Printf("OnEventPacketServer")
 	return len(data)
 	//return 0
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //client
-func OnDisConnClient(client *tcp.Client) int {
-	fmt.Println("OnDisconnClient")
-	if !client.Remote.IsConn() {
-		GLog.Warn("duplicate shutdowns")
+func OnEventDisConnClient(client *tcp.Client) int {
+	log.Printf("OnEventDisConnClient")
+	if !client.IsConn() {
+		//log.Printf("duplicate shutdowns")
 		return 0
 	}
+	//TODO 清理数据
 	return 0
 }
 
-func OnPacketClient(client *tcp.Client, data []byte) int {
-	fmt.Println("OnPacketClient")
+func OnEventPacketClient(client *tcp.Client, data []byte) int {
+	log.Printf("OnEventPacketClient")
 	return 0
 }
 
 func OnParseProtoHeadClient(data []byte, length int) int {
 	//解析协议包头 返回长度:完整包总长度  返回0:不是完整包 返回-1:包错误
-	fmt.Println("OnParseProtoHeadClient")
-	return len(data)
+	log.Printf("OnParseProtoHeadClient")
+	return length //len(data)
 }
 
 func handleEvent() {
 	for v := range eventChan {
 		switch v.(type) {
 		//server
-		case *tcp.ConnEventServer:
-			vv, ok := v.(*tcp.ConnEventServer)
+		case *tcp.EventConnServer:
+			vv, ok := v.(*tcp.EventConnServer)
 			if ok {
-				GLog.Debug(fmt.Sprintf("ConnEventServer, remote:%v", vv.Remote))
+				log.Printf("EventConnServer, remote:%v", vv.Remote)
 				vv.Server.OnConn(vv.Remote)
 
 			}
-		case *tcp.DisConnEventServer:
-			vv, ok := v.(*tcp.DisConnEventServer)
+		case *tcp.EventDisConnServer:
+			vv, ok := v.(*tcp.EventDisConnServer)
 			if ok {
-				GLog.Debug(fmt.Sprintf("DisConnEventServer, remote:%v", vv.Remote))
-				vv.Server.OnDisConn(vv.Remote)
-				if vv.Remote.IsConn() {
-					vv.Remote.Stop()
-				}
+				log.Printf("EventDisConnServer, remote:%v", vv.Remote)
+				vv.Server.EventDisconn(vv.Remote)
 			}
-		case *tcp.PacketEventServer:
-			vv, ok := v.(*tcp.PacketEventServer)
+		case *tcp.EventPacketServer:
+			vv, ok := v.(*tcp.EventPacketServer)
 			if ok {
 				if !vv.Remote.IsConn() {
 					continue
@@ -107,54 +93,44 @@ func handleEvent() {
 				vv.Server.OnPacket(vv.Remote, vv.Data)
 			}
 			//client
-		case *tcp.DisConnEventClient:
-			vv, ok := v.(*tcp.DisConnEventClient)
+		case *tcp.EventDisConnClient:
+			vv, ok := v.(*tcp.EventDisConnClient)
 			if ok {
-				GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
-				vv.Client.OnDisConn(vv.Client)
-				if vv.Client.Remote.IsConn() {
-					vv.Client.Remote.Stop()
-				}
+				log.Printf("DisconnEventClient, remote:%v", vv.Client)
+				vv.Client.EventDisConn()
 			}
-		case *tcp.PacketEventClient:
-			vv, ok := v.(*tcp.PacketEventClient)
+		case *tcp.EventPacketClient:
+			vv, ok := v.(*tcp.EventPacketClient)
 			if ok {
-				if !vv.Client.Remote.IsConn() {
+				if !vv.Client.IsConn() {
 					continue
 				}
-				vv.Client.OnPacket(vv.Client, vv.Data)
+				vv.Client.OnEventPacket(vv.Client, vv.Data)
 			}
-		//addrMulticase
-		case *addr.AddrEvent:
-
 		default:
-			GLog.Crit(fmt.Sprintf("non-existent event:%v", v))
+			log.Printf("non-existent event:%v", v)
 		}
 	}
 }
 
 func TestServer(t *testing.T) {
-	defer func() {
-		GLog.Stop()
-	}()
-
 	var s tcp.Server
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				GLog.Warn(fmt.Sprintf("handleEvent goroutine panic:%v", err))
+				log.Printf("handleEvent goroutine panic:%v", err)
 			}
-			GLog.Trace("handleEvent goroutine done.")
+			log.Printf("handleEvent goroutine done.")
 		}()
 		handleEvent()
 	}()
 
 	address := "127.0.0.1:8787"
 
-	var recvPacketMaxLen int = 1000
+	var recvPacketMaxLen uint32 = 1000
 	var sendChanCapacity uint32 = 1000
-	err := s.Strat(address, GLog, recvPacketMaxLen, eventChan,
-		OnConnServer, OnDisConnServer, OnPacketServer, OnParseProtoHeadServer, sendChanCapacity)
+	err := s.Strat(address, recvPacketMaxLen, eventChan,
+		OnEventConnServer, OnEventDisConnServer, OnPacketServer, OnParseProtoHeadServer, sendChanCapacity)
 	if err != nil {
 		t.Fatalf("server start err:%v", err)
 		return
@@ -162,67 +138,67 @@ func TestServer(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second)
-		sendChanCnt, recvChanCnt := s.Info()
-		fmt.Println(fmt.Sprintf("server sendChanCnt:%v, recvChanCnt:%v", sendChanCnt, recvChanCnt))
 	}
 }
 
 func TestClient(t *testing.T) {
-	defer func() {
-		GLog.Stop()
-	}()
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				GLog.Warn(fmt.Sprintf("handleEvent goroutine panic:%v", err))
+				log.Printf("handleEvent goroutine panic:%v", err)
 			}
-			GLog.Trace("handleEvent goroutine done.")
+			log.Printf("handleEvent goroutine done.")
 		}()
 		handleEvent()
 	}()
 
 	address := "127.0.0.1:8787"
-	rwBuffLen := 1000
+	var rwBuffLen uint32 = 1000
 	var recvPacketMaxLen uint32 = 1000
 	var sendChanCapacity uint32 = 1000
-	for i := 0; i < 10000; i++ {
+
+	//被动关闭, 由服务端关闭
+	if false {
 		var c tcp.Client
-		err := c.Connect(address, GLog, rwBuffLen, recvPacketMaxLen,
-			eventChan, OnDisConnClient, OnPacketClient, OnParseProtoHeadClient, sendChanCapacity)
+		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+			eventChan, OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, sendChanCapacity)
 		if err != nil {
 			t.Fatalf("server start err:%v", err)
 			return
 		}
+		//}
+		time.Sleep(time.Second * 20)
 	}
-	for {
-		time.Sleep(time.Second)
-	}
-}
 
-//func CheckPort(port string) error {
-//	var err error
-//
-//	tcpAddress, err := net.ResolveTCPAddr("tcp4", ":"+port)
-//	if err != nil {
-//		return err
-//	}
-//
-//	for i := 0; i < 3; i++ {
-//		listener, err := net.ListenTCP("tcp", tcpAddress)
-//		if err != nil {
-//			time.Sleep(time.Duration(100) * time.Millisecond)
-//			if i == 3 {
-//				return err
-//			}
-//			continue
-//		} else {
-//			listener.Close()
-//			break
-//		}
-//	}
-//
-//	return nil
-//}
+	//发送消息
+	if true {
+		var c tcp.Client
+		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+			eventChan, OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, sendChanCapacity)
+		if err != nil {
+			t.Fatalf("server start err:%v", err)
+			return
+		}
+		for i := 0; i < 1000; i++ {
+			time.Sleep(time.Millisecond)
+			c.Remote.Send([]byte("this is msg."))
+		}
+		//c.DisConn()
+	}
+
+	//主动关闭
+	if true {
+		var c tcp.Client
+		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+			eventChan, OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, sendChanCapacity)
+		if err != nil {
+			t.Fatalf("server start err:%v", err)
+			return
+		}
+		c.DisConn()
+	}
+	time.Sleep(time.Second * 3)
+}
 
 ///////////////////////////////////
 //client
@@ -350,14 +326,14 @@ func handleEventChan() (err error) {
 			} else {
 				log.GLog.Crit("CloseConnectEventChan type error.")
 			}
-		case *PacketEventClient:
-			vv, ok := v.(*PacketEventClient)
+		case *EventPacketClient:
+			vv, ok := v.(*EventPacketClient)
 			if ok {
 				if !vv.Client.server.isConn() {
 					continue
 				}
 				log.GLog.Trace(fmt.Sprintf("RecvEventChan."))
-				vv.Client.OnPacket(vv.Client, vv.Data)
+				vv.Client.OnEventPacket(vv.Client, vv.Data)
 			} else {
 				log.GLog.Crit("RecvEventChan type error.")
 			}

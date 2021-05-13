@@ -12,24 +12,21 @@ func (p *Server) handleEvent() {
 	for v := range p.eventChan {
 		switch v.(type) {
 		//server
-		case *tcp.ConnEventServer:
-			vv, ok := v.(*tcp.ConnEventServer)
+		case *tcp.EventConnServer:
+			vv, ok := v.(*tcp.EventConnServer)
 			if ok {
-				p.GLog.Debug(fmt.Sprintf("ConnEventServer, remote:%v", vv.Remote))
+				p.GLog.Debug(fmt.Sprintf("EventConnServer, remote:%v", vv.Remote))
 				vv.Server.OnConn(vv.Remote)
 
 			}
-		case *tcp.DisConnEventServer:
-			vv, ok := v.(*tcp.DisConnEventServer)
+		case *tcp.EventDisConnServer:
+			vv, ok := v.(*tcp.EventDisConnServer)
 			if ok {
-				p.GLog.Debug(fmt.Sprintf("DisConnEventServer, remote:%v", vv.Remote))
-				vv.Server.OnDisConn(vv.Remote)
-				if vv.Remote.IsConn() {
-					vv.Remote.Stop()
-				}
+				p.GLog.Debug(fmt.Sprintf("EventDisConnServer, remote:%v", vv.Remote))
+				vv.Server.EventDisconn(vv.Remote)
 			}
-		case *tcp.PacketEventServer:
-			vv, ok := v.(*tcp.PacketEventServer)
+		case *tcp.EventPacketServer:
+			vv, ok := v.(*tcp.EventPacketServer)
 			if ok {
 				if !vv.Remote.IsConn() {
 					continue
@@ -37,22 +34,19 @@ func (p *Server) handleEvent() {
 				vv.Server.OnPacket(vv.Remote, vv.Data)
 			}
 			//client
-		case *tcp.DisConnEventClient:
-			vv, ok := v.(*tcp.DisConnEventClient)
+		case *tcp.EventDisConnClient:
+			vv, ok := v.(*tcp.EventDisConnClient)
 			if ok {
 				p.GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
-				vv.Client.OnDisConn(vv.Client)
-				if vv.Client.Remote.IsConn() {
-					vv.Client.Remote.Stop()
-				}
+				vv.Client.EventDisConn()
 			}
-		case *tcp.PacketEventClient:
-			vv, ok := v.(*tcp.PacketEventClient)
+		case *tcp.EventPacketClient:
+			vv, ok := v.(*tcp.EventPacketClient)
 			if ok {
-				if !vv.Client.Remote.IsConn() {
+				if !vv.Client.IsConn() {
 					continue
 				}
-				vv.Client.OnPacket(vv.Client, vv.Data)
+				vv.Client.OnEventPacket(vv.Client, vv.Data)
 			}
 			//timer
 		case *timer.Second:

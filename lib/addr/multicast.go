@@ -124,6 +124,7 @@ func (p *multicast) stop() {
 	if p.cancelFunc != nil {
 		p.cancelFunc()
 		p.waitGroupGoroutineDone.Wait()
+		p.cancelFunc = nil
 	}
 
 	p.conn = nil
