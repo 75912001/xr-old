@@ -3,9 +3,10 @@ package server
 import (
 	"fmt"
 
-	"github.com/75912001/xr/lib/timer"
+	"github.com/75912001/xr/lib/addr"
 
 	"github.com/75912001/xr/lib/tcp"
+	"github.com/75912001/xr/lib/timer"
 )
 
 func (p *Server) handleEvent() {
@@ -15,14 +16,11 @@ func (p *Server) handleEvent() {
 		case *tcp.EventConnServer:
 			vv, ok := v.(*tcp.EventConnServer)
 			if ok {
-				p.GLog.Debug(fmt.Sprintf("EventConnServer, remote:%v", vv.Remote))
 				vv.Server.OnConn(vv.Remote)
-
 			}
 		case *tcp.EventDisConnServer:
 			vv, ok := v.(*tcp.EventDisConnServer)
 			if ok {
-				p.GLog.Debug(fmt.Sprintf("EventDisConnServer, remote:%v", vv.Remote))
 				vv.Server.EventDisconn(vv.Remote)
 			}
 		case *tcp.EventPacketServer:
@@ -37,7 +35,6 @@ func (p *Server) handleEvent() {
 		case *tcp.EventDisConnClient:
 			vv, ok := v.(*tcp.EventDisConnClient)
 			if ok {
-				p.GLog.Debug(fmt.Sprintf("DisconnEventClient, remote:%v", vv.Client.Remote))
 				vv.Client.EventDisConn()
 			}
 		case *tcp.EventPacketClient:
@@ -64,8 +61,11 @@ func (p *Server) handleEvent() {
 				}
 			}
 		//addrMulticase
-		//case *addrmulticase.AddrMulticast:
-
+		case *addr.EventAddrMulticast:
+			vv, ok := v.(*addr.EventAddrMulticast)
+			if ok {
+				vv.Addr.OnEventAddrMulticast(vv.AddrJson.Name, vv.AddrJson.ID, vv.AddrJson.IP, vv.AddrJson.Port, vv.AddrJson.Data)
+			}
 		default:
 			p.GLog.Crit(fmt.Sprintf("non-existent event:%v", v))
 		}

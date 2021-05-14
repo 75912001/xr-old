@@ -47,24 +47,23 @@ func OnEventPacketServer(data []byte, length int) int {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //client
 func OnEventDisConnClient(client *tcp.Client) int {
-	log.Printf("OnEventDisConnClient")
 	if !client.IsConn() {
 		//log.Printf("duplicate shutdowns")
 		return 0
 	}
-	//TODO 清理数据
+	//TODO 业务逻辑
 	return 0
 }
 
 func OnEventPacketClient(client *tcp.Client, data []byte) int {
-	log.Printf("OnEventPacketClient")
+	//TODO 业务逻辑
 	return 0
 }
 
 func OnParseProtoHeadClient(data []byte, length int) int {
 	//解析协议包头 返回长度:完整包总长度  返回0:不是完整包 返回-1:包错误
-	log.Printf("OnParseProtoHeadClient")
-	return length //len(data)
+	//TODO 业务逻辑
+	return length
 }
 
 func handleEvent() {
@@ -145,9 +144,9 @@ func TestClient(t *testing.T) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("handleEvent goroutine panic:%v", err)
+				log.Printf("handle_event goroutine panic:%v", err)
 			}
-			log.Printf("handleEvent goroutine done.")
+			log.Printf("handle_event goroutine done.")
 		}()
 		handleEvent()
 	}()

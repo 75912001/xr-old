@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/75912001/xr/lib/addr"
-
 	"github.com/75912001/xr/lib/util"
 )
 
@@ -36,6 +35,11 @@ type benchJson struct {
 	} `json:"server"`
 
 	AddrMulticast addr.AddrJson `json:"addrMulticast"`
+	Multicast     struct {
+		IP                    string `json:"ip"`
+		Port                  uint16 `json:"port"`
+		NetworkInterfacenName string `json:"networkInterfacenName"`
+	} `json:"multicast"`
 }
 
 func (p *Mgr) Parse(pathFile string) (err error) {

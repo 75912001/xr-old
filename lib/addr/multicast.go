@@ -21,7 +21,7 @@ type multicast struct {
 }
 
 // 运行
-func (p *multicast) start(ip string, port uint16, netName string, addr *Addr) (err error) {
+func (p *multicast) start(ip string, port uint16, networkInterfacenName string, addr *Addr) (err error) {
 	var strAddr = ip + ":" + strconv.Itoa(int(port))
 	p.mcaddr, err = net.ResolveUDPAddr("udp4", strAddr)
 	if err != nil {
@@ -37,7 +37,7 @@ func (p *multicast) start(ip string, port uint16, netName string, addr *Addr) (e
 
 	pc := ipv4.NewPacketConn(p.conn)
 
-	iface, err := net.InterfaceByName(netName)
+	iface, err := net.InterfaceByName(networkInterfacenName)
 	if err != nil {
 		log.Printf("can't find specified interface err:%v", err)
 		return err

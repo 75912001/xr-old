@@ -19,10 +19,10 @@ func handleEvent() {
 	for v := range eventChan {
 		switch v.(type) {
 		//addr
-		case *addr.AddrEvent:
-			vv, ok := v.(*addr.AddrEvent)
+		case *addr.EventAddrMulticast:
+			vv, ok := v.(*addr.EventAddrMulticast)
 			if ok {
-				vv.Addr.OnAddr(vv.AddrJson.Name, vv.AddrJson.ID, vv.AddrJson.IP, vv.AddrJson.Port, vv.AddrJson.Data)
+				vv.Addr.OnEventAddrMulticast(vv.AddrJson.Name, vv.AddrJson.ID, vv.AddrJson.IP, vv.AddrJson.Port, vv.AddrJson.Data)
 			}
 		default:
 			log.Fatalf("non-existent event:%v", v)
