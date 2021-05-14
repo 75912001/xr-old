@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"fmt"
@@ -8,32 +8,11 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/75912001/xr/lib/addr"
-
-	"github.com/75912001/xr/lib/timer"
-
-	"github.com/75912001/xr/lib/tcp"
-
-	"github.com/75912001/xr/lib/bench"
-	xrlog "github.com/75912001/xr/lib/log"
 	"github.com/75912001/xr/lib/util"
 )
 
-type Server struct {
-	Log        xrlog.Log
-	BenchMgr   bench.Mgr
-	TimerMgr   timer.TimerMgr
-	TcpService tcp.Server
-	Addr       addr.Addr
-	eventChan  chan interface{}
-}
-
-func (p *Server) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
-	onEventDisConnServerFunc tcp.OnEventDisConnServerFunc,
-	onEventPacketServerFunc tcp.OnEventPacketServerFunc,
-	onParseProtoHeadFunc tcp.OnParseProtoHeadFunc,
-	onEventAddrMulticastFunc addr.OnEventAddrMulticastFunc) (err error) {
-	log.Printf("service Init.")
+func main() {
+	log.Printf("reboot Init.")
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -111,14 +90,5 @@ func (p *Server) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
 		}
 	}
 
-	return
-}
-
-func (p *Server) Stop() (err error) {
-	p.TimerMgr.Stop()
-	p.TcpService.Stop()
-	p.Addr.Stop()
-	p.Log.Stop()
-
-	return
+	c.Connect(address, rwBuffLen, recvPacketMaxLen, tcpChan)
 }

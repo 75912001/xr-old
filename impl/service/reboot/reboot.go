@@ -1,4 +1,4 @@
-package server
+package reboot
 
 import (
 	"fmt"
@@ -8,27 +8,24 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/75912001/xr/impl/service/reboot/bench"
 	"github.com/75912001/xr/lib/addr"
-
-	"github.com/75912001/xr/lib/timer"
-
-	"github.com/75912001/xr/lib/tcp"
-
-	"github.com/75912001/xr/lib/bench"
 	xrlog "github.com/75912001/xr/lib/log"
+	"github.com/75912001/xr/lib/tcp"
+	"github.com/75912001/xr/lib/timer"
 	"github.com/75912001/xr/lib/util"
 )
 
-type Server struct {
+type Reboot struct {
 	Log        xrlog.Log
 	BenchMgr   bench.Mgr
 	TimerMgr   timer.TimerMgr
 	TcpService tcp.Server
-	Addr       addr.Addr
-	eventChan  chan interface{}
+
+	eventChan chan interface{}
 }
 
-func (p *Server) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
+func (p *Reboot) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
 	onEventDisConnServerFunc tcp.OnEventDisConnServerFunc,
 	onEventPacketServerFunc tcp.OnEventPacketServerFunc,
 	onParseProtoHeadFunc tcp.OnParseProtoHeadFunc,
@@ -110,15 +107,6 @@ func (p *Server) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
 			}
 		}
 	}
-
-	return
-}
-
-func (p *Server) Stop() (err error) {
-	p.TimerMgr.Stop()
-	p.TcpService.Stop()
-	p.Addr.Stop()
-	p.Log.Stop()
 
 	return
 }

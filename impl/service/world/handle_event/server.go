@@ -1,6 +1,10 @@
 package handle_event
 
 import (
+	"fmt"
+
+	"github.com/75912001/xr/impl/service/common/proto_head"
+	"github.com/75912001/xr/impl/service/world"
 	"github.com/75912001/xr/lib/tcp"
 )
 
@@ -23,7 +27,24 @@ func OnEventPacketServer(remote *tcp.Remote, data []byte) int {
 }
 
 func OnParseProtoHeadServer(data []byte, length int) int {
-	//解析协议包头 返回长度:完整包总长度  返回0:不是完整包 返回-1:包错误
-	//TODO 业务逻辑
-	return length
+	if uint32(length) < proto_head.GProtoHeadLength {
+		//长度不足一个包头的长度大小
+		return 0
+	}
+	packetLength := int(proto_head.GetPacketLength(data))
+	if uint32(packetLength) < proto_head.GProtoHeadLength {
+		world.GServer.Log.Error(fmt.Sprintf("packetLength:%v", packetLength))
+		return -1
+	}
+	if world.GServer.BenchMgr.Json.Base.PacketLengthMax < uint32(packetLength) {
+		world.GServer.Log.Error(fmt.Sprintf("PacketLengthMax:%v, packetLength:%v",
+			world.GServer.BenchMgr.Json.Base.PacketLengthMax, packetLength))
+		return -1
+	}
+
+	if length < int(packetLength) {
+		return 0
+	}
+
+	return packetLength
 }

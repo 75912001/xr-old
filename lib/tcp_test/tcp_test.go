@@ -212,8 +212,8 @@ var sendSumCount int
 
 //go test -v -test.run TestClient_Connect
 func TestClient_Connect(t *testing.T) {
-	log.GLog = &log.Log{}
-	log.GLog.Init("connect_")
+	log.Log = &log.Log{}
+	log.Log.Init("connect_")
 
 	go handleEventChan()
 
@@ -232,9 +232,9 @@ func TestClient_Connect(t *testing.T) {
 
 //go test -v -test.run TestClient_Send
 func TestClient_Send(t *testing.T) {
-	log.GLog = &log.Log{}
-	log.GLog.Init("send_")
-	//log.GLog.SetLevel(7)
+	log.Log = &log.Log{}
+	log.Log.Init("send_")
+	//log.Log.SetLevel(7)
 
 	buf8 := new(bytes.Buffer)
 	binary.Write(buf8, binary.LittleEndian, uint32(8))
@@ -265,15 +265,15 @@ func TestClient_Send(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		time.Sleep(time.Second)
-		log.GLog.Debug(fmt.Sprintf("%v", i))
+		log.Log.Debug(fmt.Sprintf("%v", i))
 	}
 	client.DisConn()
 }
 
 //go test -v -test.run TestClient_Recv
 func TestClient_Recv(t *testing.T) {
-	log.GLog = &log.Log{}
-	log.GLog.Init("recv_")
+	log.Log = &log.Log{}
+	log.Log.Init("recv_")
 
 	buf8 := new(bytes.Buffer)
 	binary.Write(buf8, binary.LittleEndian, uint32(8))
@@ -306,10 +306,10 @@ func TestClient_Recv(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		time.Sleep(time.Second)
-		log.GLog.Debug(fmt.Sprintf("%v", i))
+		log.Log.Debug(fmt.Sprintf("%v", i))
 	}
 	client.DisConn()
-	log.GLog.Trace(fmt.Sprintf("recv sum count:%v", recvSumCount))
+	log.Log.Trace(fmt.Sprintf("recv sum count:%v", recvSumCount))
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -320,10 +320,10 @@ func handleEventChan() (err error) {
 		case *DisconnEventClient:
 			vv, ok := v.(*DisconnEventClient)
 			if ok {
-				log.GLog.Trace(fmt.Sprintf("CloseConnectEventChan."))
+				log.Log.Trace(fmt.Sprintf("CloseConnectEventChan."))
 				vv.Client.OnDisConn()
 			} else {
-				log.GLog.Crit("CloseConnectEventChan type error.")
+				log.Log.Crit("CloseConnectEventChan type error.")
 			}
 		case *EventPacketClient:
 			vv, ok := v.(*EventPacketClient)
@@ -331,13 +331,13 @@ func handleEventChan() (err error) {
 				if !vv.Client.server.isConn() {
 					continue
 				}
-				log.GLog.Trace(fmt.Sprintf("RecvEventChan."))
+				log.Log.Trace(fmt.Sprintf("RecvEventChan."))
 				vv.Client.OnEventPacket(vv.Client, vv.Data)
 			} else {
-				log.GLog.Crit("RecvEventChan type error.")
+				log.Log.Crit("RecvEventChan type error.")
 			}
 		default:
-			log.GLog.Crit(fmt.Sprintf("not find event, event:%v", v))
+			log.Log.Crit(fmt.Sprintf("not find event, event:%v", v))
 		}
 	}
 	return err
@@ -351,7 +351,7 @@ func OnParseProtoHeadFun(buf []byte, length int) int {
 	packetLength := int(parseProtoHeadPacketLength(buf))
 
 	if int(packetLength) < 4 {
-		log.GLog.Crit(fmt.Sprintf("PacketLength:%v", packetLength))
+		log.Log.Crit(fmt.Sprintf("PacketLength:%v", packetLength))
 		return -1
 	}
 
@@ -371,14 +371,14 @@ func parseProtoHeadPacketLength(buf []byte) (packetLength uint32) {
 
 //远端链接关闭
 func OnDisconnectFun(client *Client) int {
-	log.GLog.Trace(fmt.Sprintf("disconnect, server ip:%v", client.server.conn.RemoteAddr().String()))
+	log.Log.Trace(fmt.Sprintf("disconnect, server ip:%v", client.server.conn.RemoteAddr().String()))
 	//TODO
 	return 0
 }
 
 //远端包
 func OnPacketFun(client *Client, buf []byte) int {
-	log.GLog.Trace(fmt.Sprintf("packet, server ip:%v, len:%v", client.server.conn.RemoteAddr().String(), len(buf)))
+	log.Log.Trace(fmt.Sprintf("packet, server ip:%v, len:%v", client.server.conn.RemoteAddr().String(), len(buf)))
 	//TODO
 	recvSumCount += len(buf)
 	return 0

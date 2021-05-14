@@ -18,6 +18,7 @@ func main() {
 		log.Fatalf("server init err:%v", err)
 		return
 	}
+
 	defer func() {
 		world.GServer.Stop()
 	}()

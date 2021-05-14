@@ -67,7 +67,7 @@ func (p *Server) handleEvent() {
 				vv.Addr.OnEventAddrMulticast(vv.AddrJson.Name, vv.AddrJson.ID, vv.AddrJson.IP, vv.AddrJson.Port, vv.AddrJson.Data)
 			}
 		default:
-			p.GLog.Crit(fmt.Sprintf("non-existent event:%v", v))
+			p.Log.Crit(fmt.Sprintf("non-existent event:%v", v))
 		}
 	}
 }
