@@ -99,7 +99,7 @@ func (p *Remote) onSendEvent(ctx context.Context) {
 			return
 		case v1, ok := <-p.sendChan:
 			if !ok {
-				log.Printf("sendChan is close, but not nil. ok value:%v", ok)
+				//log.Printf("sendChan is close, but not nil. ok value:%v", ok)
 				return
 			}
 			switch v1.(type) {
@@ -146,7 +146,7 @@ func (p *Remote) onRecvEvent(recvPacketMaxLen uint32, onParseProtoHead OnParsePr
 	LoopRead:
 		readNum, err := p.conn.Read(buf[readIndex:])
 		if nil != err {
-			log.Printf("Conn.Read, read num:%v, err:%v", readNum, err)
+			//			log.Printf("Conn.Read, read num:%v, err:%v", readNum, err)
 			return
 		}
 		readIndex += readNum

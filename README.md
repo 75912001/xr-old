@@ -34,11 +34,13 @@ lib/tcp
 
 ---
 #sprints 2:  
-定义协议包头  
+~~定义协议包头~~  
 
-服务之间tcp连接
+~~服务之间tcp连接~~
 
 google protobuf 通讯
+
+PProf
 
 >测试tcp服务  
 >> 监控协程数量  
@@ -49,8 +51,8 @@ google protobuf 通讯
 > > >主动断开  
 > > >被动断开
 
-> 发送数据包 s->c  
-> 发送数据包 c->s
+ 
+
 
 
 ---

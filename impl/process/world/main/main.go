@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/75912001/xr/impl/service/world"
@@ -22,9 +25,16 @@ func main() {
 	defer func() {
 		world.GServer.Stop()
 	}()
-
+	go func() {
+		fmt.Println("pprof start...")
+		fmt.Println(http.ListenAndServe(":9876", nil))
+		for {
+			time.Sleep(time.Second)
+		}
+	}()
 	for {
 		time.Sleep(time.Second)
+		log.Printf("goroutine cnt:%v", runtime.NumGoroutine())
 	}
 }
 

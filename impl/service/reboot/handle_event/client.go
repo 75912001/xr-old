@@ -3,8 +3,9 @@ package handle_event
 import (
 	"fmt"
 
+	"github.com/75912001/xr/impl/service/reboot"
+
 	"github.com/75912001/xr/impl/service/common/proto_head"
-	"github.com/75912001/xr/impl/service/world"
 	"github.com/75912001/xr/lib/tcp"
 )
 
@@ -28,12 +29,12 @@ func OnParseProtoHeadClient(data []byte, length int) int {
 	}
 	packetLength := int(proto_head.GetPacketLength(data))
 	if uint32(packetLength) < proto_head.GProtoHeadLength {
-		world.GServer.Log.Error(fmt.Sprintf("packetLength:%v", packetLength))
+		reboot.GRebootMgr.Log.Error(fmt.Sprintf("packetLength:%v", packetLength))
 		return -1
 	}
-	if world.GServer.BenchMgr.Json.Base.PacketLengthMax < uint32(packetLength) {
-		world.GServer.Log.Error(fmt.Sprintf("PacketLengthMax:%v, packetLength:%v",
-			world.GServer.BenchMgr.Json.Base.PacketLengthMax, packetLength))
+	if reboot.GRebootMgr.BenchMgr.Json.Base.PacketLengthMax < uint32(packetLength) {
+		reboot.GRebootMgr.Log.Error(fmt.Sprintf("PacketLengthMax:%v, packetLength:%v",
+			reboot.GRebootMgr.BenchMgr.Json.Base.PacketLengthMax, packetLength))
 		return -1
 	}
 

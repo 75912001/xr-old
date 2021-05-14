@@ -11,8 +11,8 @@
     "__comments__":"事件chan数量",
     "eventChanCnt": 100000,
 
-    "__comments__":"bytes,每个TCP包的最大长度",
-    "packetLengthMax": 81920,
+    "__comments__":"bytes,每个TCP包的最大长度. 81920",
+    "packetLengthMax": 1024,
     "__comments__":"每个TCP链接的发送chan大小",
     "sendChanCapacity": 1000
   },
@@ -30,7 +30,7 @@
     "address": "127.0.0.1:3001"
   },
   "reboot": {
-    "cnt": 1
+    "cnt": 1000
   }
 }
 
