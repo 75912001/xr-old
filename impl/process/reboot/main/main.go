@@ -1,94 +1,28 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"math/rand"
-	"path"
-	"runtime"
 	"time"
 
-	"github.com/75912001/xr/lib/util"
+	"github.com/75912001/xr/lib/tcp"
+
+	"github.com/75912001/xr/impl/service/reboot"
+	"github.com/75912001/xr/impl/service/reboot/handle_event"
 )
 
 func main() {
-	log.Printf("reboot Init.")
-
-	rand.Seed(time.Now().UnixNano())
-
-	currentPath, err := util.GetCurrentPath()
+	err := reboot.GRebootMgr.Init()
 	if err != nil {
-		log.Fatalf("GetCurrentPath fatal:%v", err)
+		log.Fatalf("rebootMgr init err:%v", err)
 		return
 	}
-	log.Printf("service current path:%v", currentPath)
-	{ //加载bench.json文件
-		err = p.BenchMgr.Parse(path.Join(currentPath, "bench.json"))
-		if err != nil {
-			log.Fatalf("parse bench.json err:%v", err)
-			return
-		}
-		log.Printf("bench json:%+v", p.BenchMgr.Json)
-	}
-	{ //log
-		err = p.Log.Init(p.BenchMgr.Json.Base.LogAbsPath, fmt.Sprintf("%v-%v",
-			p.BenchMgr.Json.Base.ServiceName, p.BenchMgr.Json.Base.ServiceID))
-		if err != nil {
-			log.Fatalf("log init err:%v", err)
-			return
-		}
-		p.Log.SetLevel(int(p.BenchMgr.Json.Base.LogLevel))
-	}
-	{ //runtime.GOMAXPROCS
-		previousValue := runtime.GOMAXPROCS(int(p.BenchMgr.Json.Base.GoMaxProcs))
-		p.Log.Info(fmt.Sprintf("go max procs new:%v, prviousValue:%v", p.BenchMgr.Json.Base.GoMaxProcs, previousValue))
-	}
-	//eventChan
-	{
-		p.eventChan = make(chan interface{}, p.BenchMgr.Json.Base.EventChanCnt)
-		go func() {
-			defer func() {
-				if err := recover(); err != nil {
-					p.Log.Warn(fmt.Sprintf("handle_event goroutine panic:%v", err))
-				}
-				p.Log.Trace("handle_event goroutine done.")
-			}()
-			p.handleEvent()
-		}()
-	}
-	//timer
-	{
-		if 0 != p.BenchMgr.Json.Timer.ScanSecondDuration || 0 != p.BenchMgr.Json.Timer.ScanMillisecondDuration {
-			p.TimerMgr.Start(p.BenchMgr.Json.Timer.ScanSecondDuration, p.BenchMgr.Json.Timer.ScanMillisecondDuration, p.eventChan)
-		}
-	}
-	//tcp service
-	{
-		if 0 != len(p.BenchMgr.Json.Server.IP) || 0 != len(p.BenchMgr.Json.Server.Port) {
-			address := p.BenchMgr.Json.Server.IP + ":" + p.BenchMgr.Json.Server.Port
 
-			err = p.TcpService.Strat(address, p.BenchMgr.Json.Base.PacketLengthMax, p.eventChan,
-				onEventConnServerFunc, onEventDisConnServerFunc, onEventPacketServerFunc, onParseProtoHeadFunc, p.BenchMgr.Json.Base.SendChanCapacity)
-			if err != nil {
-				p.Log.Crit("StartTcpService err:", err)
-				return
-			}
-		}
+	var c tcp.Client
+	j := &reboot.GRebootMgr.BenchMgr.Json
+	c.Connect(j.Server.Address, j.Base.PacketLengthMax, j.Base.PacketLengthMax, reboot.GRebootMgr.EventChan,
+		handle_event.OnEventDisConnClient, handle_event.OnEventPacketClient, handle_event.OnParseProtoHeadClient, j.Base.SendChanCapacity)
+	for {
+		time.Sleep(time.Second * 10)
+		c.Remote.Send([]byte("123"))
 	}
-	//add multicast
-	{
-		am := &p.BenchMgr.Json.AddrMulticast
-		m := &p.BenchMgr.Json.Multicast
-		if 0 != len(am.Name) && 0 != am.ID && 0 != len(am.IP) && 0 != am.Port &&
-			0 != len(m.IP) && 0 != m.Port && 0 != len(m.NetworkInterfacenName) {
-			err = p.Addr.Start(p.eventChan, onEventAddrMulticastFunc, m.IP, m.Port, m.NetworkInterfacenName,
-				am.Name, am.ID, am.IP, am.Port, am.Data)
-			if err != nil {
-				p.Log.Crit(fmt.Printf("addr multicase err:%v", err))
-				return
-			}
-		}
-	}
-
-	c.Connect(address, rwBuffLen, recvPacketMaxLen, tcpChan)
 }

@@ -29,9 +29,11 @@ type benchJson struct {
 	} `json:"timer"`
 
 	Server struct {
-		IP   string `json:"ip"`
-		Port string `json:"port"`
+		Address string `json:"address"`
 	} `json:"server"`
+	Reboot struct {
+		Cnt uint32 `json:"cnt"`
+	} `json:"reboot"`
 }
 
 func (p *Mgr) Parse(pathFile string) (err error) {
