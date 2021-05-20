@@ -3,6 +3,8 @@ package handle_http
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/75912001/xr/impl/service/protobuf/login_proto"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -90,7 +92,6 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 	//////////////////////////////////////////////////////////////////////
 	var newAccount string
 	newAccount = lj.Account
-	_ = newAccount
 
 	if login.GBench.Json.Platform != lj.Platform {
 		login.GServer.Log.Error(fmt.Sprintf("LoginHttpHandler platform err:%v, %v", login.GBench.Json.Platform, lj.Platform))
@@ -104,8 +105,8 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 		gj.ErrorCode = 1
 		return
 	}
-	//////////////////////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////////////////////
 	var session string
 	{ //检查签名,生成session
 		var verifyString string
@@ -118,33 +119,20 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 		verifyString += fmt.Sprint(time.Now().UnixNano())
 		session = util.GenMd5([]byte(verifyString))
 	}
-	_ = session
-	/*
-		{ //通知对应的服务器
-			res := new(loginserv_msg.LoginMsgRes)
-			res.Platform = proto.Uint32(lj.Platform)
-			res.Account = proto.String(newAccount)
-			res.Session = proto.String(session)
 
-			ztcp.Lock()
+	{ //通知对应的服务器
+		res := new(login_proto.LoginMsgRes)
+		res.Platform = proto.Uint32(lj.Platform)
+		res.Account = proto.String(newAccount)
+		res.Session = proto.String(session)
 
-			user := GuserMgr.FindId(uid)
-			if nil == user {
-				gLog.Error("loginHttpHandler find id:", uid)
-				//返回失败
-				gj.ErrorCode = 1
-				ztcp.UnLock()
-				return
-			}
-			peerConn := user.PeerConn
-			//TODO 发送数据时, chan 如果为close/nil 状态, 会有不同的pinc/blocking...
-			peerConn.Send(res, ztcp.MESSAGE_ID(loginserv_msg.CMD_LOGIN_MSG), 0, 0, 0)
+		//ztcp.Lock()
+		//TODO 发送数据时, chan 如果为close/nil 状态, 会有不同的pinc/blocking...
+		//peerConn.Send(res, ztcp.MESSAGE_ID(loginserv_msg.CMD_LOGIN_MSG), 0, 0, 0)
 
-			gj.Ip = user.Ip
-			gj.Port = uint32(user.Port)
-			gj.Session = session
-
-			ztcp.UnLock()
-		}
-	*/
+		gj.Ip = worldService.IP
+		gj.Port = worldService.Port
+		gj.Session = session
+		//ztcp.UnLock()
+	}
 }

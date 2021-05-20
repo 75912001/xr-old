@@ -1,6 +1,5 @@
 syntax="proto3";
-option go_package="go/src/login/proto";
-package login_msg;
+option go_package="../service/protobuf/login_proto";
 
 //import "common_msg.proto";
 
@@ -8,16 +7,16 @@ package login_msg;
 //login[0x50000,0x5ffff]
 ////////////////////////////////////////////////
 
-
 enum CMD
 {
+    def = 0;
 	LOGIN_MSG = 0x50001;
 }
 
 message login_msg//1,0x50001#world->login
 {
 	optional string ip = 1;
-	optional uint16 port = 2;
+	optional uint32 port = 2;
 }
 
 message login_msg_res

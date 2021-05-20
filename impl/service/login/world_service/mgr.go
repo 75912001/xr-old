@@ -6,6 +6,7 @@ import (
 
 type WorldServiceMgr struct {
 	client_mgr.ClientMgr
+
 }
 
 func (p *WorldServiceMgr) GetRandWorldService() (worldService *client_mgr.Client) {
