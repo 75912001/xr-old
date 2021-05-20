@@ -22,6 +22,12 @@ func main() {
 		return
 	}
 
+	err = world.GMongodbMgr.Connect(world.GServer.BenchMgr.Json.DB.IP, world.GServer.BenchMgr.Json.DB.Port)
+	if err != nil {
+		log.Fatalf("mongodb connect err:%v", err)
+		return
+	}
+
 	defer func() {
 		world.GServer.Stop()
 	}()

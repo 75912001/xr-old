@@ -28,12 +28,14 @@ type benchJson struct {
 		ScanSecondDuration      time.Duration `json:"scanSecondDuration"`
 		ScanMillisecondDuration time.Duration `json:"scanMillisecondDuration"`
 	} `json:"timer"`
-
 	Server struct {
 		IP   string `json:"ip"`
-		Port string `json:"port"`
+		Port uint16 `json:"port"`
 	} `json:"server"`
-
+	DB struct {
+		IP   string `json:"ip"`
+		Port uint16 `json:"port"`
+	} `json:"db"`
 	AddrMulticast addr.AddrJson `json:"addrMulticast"`
 	Multicast     struct {
 		IP                    string `json:"ip"`

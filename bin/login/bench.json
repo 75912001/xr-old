@@ -1,0 +1,53 @@
+{
+  "base": {
+    "serviceName": "login",
+    "serviceID": 1,
+
+    "logLevel": 9,
+    "logAbsPath": "C:\\Go\\src\\github.com\\75912001\\xr\\bin\\login\\log",
+
+    "__comments__":"0:runtime.NumCPU()",
+    "goMaxProcs":8,
+    "__comments__":"事件chan数量",
+    "eventChanCnt": 100000,
+
+    "__comments__":"bytes,每个TCP包的最大长度. e.g.:81920",
+    "packetLengthMax": 1024,
+    "__comments__":"每个TCP链接的发送chan大小",
+    "sendChanCapacity": 1000
+  },
+
+  "__comments__":"无,则不启用该功能",
+  "timer": {
+    "__comments__":"秒级定时器 扫描间隔(纳秒) 1000*1000*100=100000000 为100毫秒",
+    "scanSecondDuration": 100000000,
+    "__comments__":"毫秒级定时器 扫描间隔(纳秒) 1000*1000*100=100000000 为100毫秒",
+    "scanMillisecondDuration": 100000000
+  },
+
+  "__comments__":"无,则不启用该功能",
+  "server": {
+    "ip": "127.0.0.1",
+    "port": 6001
+  },
+
+
+
+
+  "__comments__":"无,则不启用该功能",
+  "addrMulticast": {
+    "name": "login",
+    "id": 1,
+    "ip": "127.0.0.1",
+    "port": 6001,
+    "data": "this is data."
+  },
+  "multicast": {
+    "__comments__":"e.g.:239.0.0.8",
+    "ip": "239.0.0.8",
+    "port": 8890,
+    "__comments__":"interface on which arriving multicast datagrams will be received. e.g.:eth0",
+    "networkInterfacenName": "Wi-Fi"
+  }
+}
+
