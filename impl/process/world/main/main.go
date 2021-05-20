@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"path"
 	"runtime"
 	"time"
+
+	"github.com/75912001/xr/lib/util"
 
 	"github.com/75912001/xr/impl/service/world"
 
@@ -18,6 +22,27 @@ func main() {
 	if err != nil {
 		log.Fatalf("server init err:%v", err)
 		return
+	}
+	{ //加载bench.json文件中world自有field
+		currentPath, err := util.GetCurrentPath()
+		if err != nil {
+			world.GServer.Log.Crit("GetCurrentPath fatal:", err)
+			return
+		}
+		{
+			err = util.UnmarshalJsonFile(path.Join(currentPath, "bench.json"), &world.GBench.Json)
+			if err != nil {
+				world.GServer.Log.Crit("parse bench.json err:", err)
+				return
+			}
+			world.GServer.Log.Info(fmt.Sprintf("bench json:%+v", world.GBench.Json))
+		}
+		{ //check
+			if len(world.GBench.Json.DB.IP) == 0 || world.GBench.Json.DB.Port == 0 {
+				world.GServer.Log.Crit("db address is error.")
+				return
+			}
+		}
 	}
 
 	//err = world.GMongodbMgr.Connect(world.GServer.BenchMgr.Json.DB.IP, world.GServer.BenchMgr.Json.DB.Port)

@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/75912001/xr/impl/service/reboot/bench"
+	"github.com/75912001/xr/lib/bench"
 	xrlog "github.com/75912001/xr/lib/log"
 	"github.com/75912001/xr/lib/timer"
 	"github.com/75912001/xr/lib/util"
@@ -75,5 +75,21 @@ func (p *RebootMgr) Init() (err error) {
 		}
 	}
 
+	//加载bench.json文件中reboot自有field
+	{
+		currentPath, err := util.GetCurrentPath()
+		if err != nil {
+			p.Log.Crit("GetCurrentPath fatal:", err)
+			return
+		}
+		{
+			err = util.UnmarshalJsonFile(path.Join(currentPath, "bench.json"), &GBench.Json)
+			if err != nil {
+				p.Log.Crit("parse bench.json err:", err)
+				return
+			}
+			p.Log.Info(fmt.Sprintf("bench json:%+v", GBench.Json))
+		}
+	}
 	return
 }

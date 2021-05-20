@@ -1,8 +1,6 @@
 package handle_event
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 
 	"github.com/75912001/xr/impl/service/login"
@@ -12,7 +10,7 @@ import (
 )
 
 func OnEventConnServer(remote *tcp.Remote) int {
-	//TODO 业务逻辑
+	_ = login.GWorldServiceMgr.AddUser(remote)
 	return 0
 }
 
@@ -20,28 +18,11 @@ func OnEventDisConnServer(remote *tcp.Remote) int {
 	if !remote.IsConn() {
 		return 0
 	}
-	//TODO 业务逻辑
+	login.GWorldServiceMgr.DelUser(remote)
 	return 0
 }
 
 func OnEventPacketServer(remote *tcp.Remote, data []byte) int {
-	//TODO 业务逻辑
-
-	var ph proto_head.ProtoHead
-	ph.PacketLength = 24
-	ph.MessageID = 1
-	ph.SessionID = 2
-	ph.ResultID = 3
-	ph.UserID = 4
-
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, ph.PacketLength)
-	binary.Write(buf, binary.LittleEndian, ph.MessageID)
-	binary.Write(buf, binary.LittleEndian, ph.SessionID)
-	binary.Write(buf, binary.LittleEndian, ph.ResultID)
-	binary.Write(buf, binary.LittleEndian, ph.UserID)
-
-	remote.Send(buf.Bytes())
 	return 0
 }
 

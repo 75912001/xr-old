@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"runtime"
 	"time"
@@ -21,11 +22,12 @@ func main() {
 		return
 	}
 
-	for i := uint32(0); i < reboot.GRebootMgr.BenchMgr.Json.Reboot.Cnt; i++ {
+	for i := uint32(0); i < reboot.GBench.Json.Reboot.Cnt; i++ {
 		go func() {
 			var c tcp.Client
 			j := &reboot.GRebootMgr.BenchMgr.Json
-			err := c.Connect(j.Server.Address, j.Base.PacketLengthMax, j.Base.PacketLengthMax, reboot.GRebootMgr.EventChan,
+			address := fmt.Sprintf("%v:%v", reboot.GBench.Json.Reboot.ServerIP, reboot.GBench.Json.Reboot.ServerPort)
+			err := c.Connect(address, j.Base.PacketLengthMax, reboot.GRebootMgr.EventChan,
 				handle_event.OnEventDisConnClient, handle_event.OnEventPacketClient, handle_event.OnParseProtoHeadClient, j.Base.SendChanCapacity)
 			if err != nil {
 				log.Printf("connect server err:%v", err)

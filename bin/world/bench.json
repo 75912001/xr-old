@@ -41,11 +41,6 @@
       "port": 3001
     }
   ],
-  "__comments__":"无,则不启用该功能",
-  "db": {
-    "ip": "127.0.0.1",
-    "port": 9001
-  },
 
   "__comments__":"无,则不启用该功能",
   "addrMulticast": {
@@ -61,6 +56,11 @@
     "port": 8890,
     "__comments__":"interface on which arriving multicast datagrams will be received. e.g.:eth0",
     "networkInterfacenName": "Wi-Fi"
+  },
+
+  "db": {
+    "ip": "127.0.0.1",
+    "port": 9001
   }
 }
 

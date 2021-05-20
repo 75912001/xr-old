@@ -1,0 +1,28 @@
+syntax="proto3";
+option go_package="go/src/login/proto";
+package login_msg;
+
+//import "common_msg.proto";
+
+////////////////////////////////////////////////
+//login[0x50000,0x5ffff]
+////////////////////////////////////////////////
+
+
+enum CMD
+{
+	LOGIN_MSG = 0x50001;
+}
+
+message login_msg//1,0x50001#world->login
+{
+	optional string ip = 1;
+	optional uint16 port = 2;
+}
+
+message login_msg_res
+{
+	optional uint32 platform = 1;//平台号
+	optional string account = 2;//帐号
+	optional string session = 3;//登录验证时使用的session
+}

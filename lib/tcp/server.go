@@ -131,7 +131,7 @@ func (p *Server) handleConn(conn *net.TCPConn, recvPacketMaxLen uint32, onParseP
 		copy(pes.Data, data[:packetLength])
 		p.tcpChan <- pes
 	}
-	remote.start(conn, recvPacketMaxLen, sendChanCapacity, recvPacketMaxLen, onParseProtoHead)
+	remote.start(conn, sendChanCapacity, recvPacketMaxLen, onParseProtoHead)
 
 	//链接上
 	p.tcpChan <- &EventConnServer{

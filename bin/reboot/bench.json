@@ -25,11 +25,9 @@
     "scanMillisecondDuration": 100000000
   },
 
-  "__comments__":"无,则不启用该功能",
-  "server": {
-    "address": "127.0.0.1:3001"
-  },
   "reboot": {
+    "serverIP": "127.0.0.1",
+    "serverPort": 3001,
     "cnt": 1000
   }
 }
