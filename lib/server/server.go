@@ -86,7 +86,7 @@ func (p *Server) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
 	//tcp service
 	{
 		if 0 != len(p.BenchMgr.Json.Server.IP) || 0 != p.BenchMgr.Json.Server.Port {
-			address := p.BenchMgr.Json.Server.IP + ":" + fmt.Sprintf("%v",p.BenchMgr.Json.Server.Port)
+			address := p.BenchMgr.Json.Server.IP + ":" + fmt.Sprintf("%v", p.BenchMgr.Json.Server.Port)
 
 			err = p.TcpService.Strat(address, p.BenchMgr.Json.Base.PacketLengthMax, p.eventChan,
 				onEventConnServerFunc, onEventDisConnServerFunc, onEventPacketServerFunc, onParseProtoHeadFunc, p.BenchMgr.Json.Base.SendChanCapacity)
@@ -121,4 +121,8 @@ func (p *Server) Stop() (err error) {
 	p.Log.Stop()
 
 	return
+}
+
+func (p *Server) GetEventChan() (eventChan chan<- interface{}) {
+	return p.eventChan
 }

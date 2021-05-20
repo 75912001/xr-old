@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/75912001/xr/impl/service/login"
-	"github.com/75912001/xr/impl/service/world/handle_event"
 	"log"
 	"runtime"
 	"time"
+
+	"github.com/75912001/xr/impl/service/login"
+	"github.com/75912001/xr/impl/service/login/handle_event"
 )
 
 func main() {

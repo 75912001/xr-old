@@ -17,11 +17,10 @@ type Client struct {
 //每个连接有一个 发送协程, 一个 接收协程
 //事件放入 参数 eventChan 中, 以供外部处理
 //address:127.0.0.1:8787
-//rwBuffLen:tcp recv/send 缓冲大小
 //recvPacketMaxLen:接受数据包的最大长度(包头+包体)
 //tcpChan:外部传递的事件处理管道.连接的事件会放入该管道,以供外部处理
 //sendChanCapacity:发送管道容量
-func (p *Client) Connect(address string, rwBuffLen uint32, recvPacketMaxLen uint32, tcpChan chan<- interface{},
+func (p *Client) Connect(address string, recvPacketMaxLen uint32, tcpChan chan<- interface{},
 	OnEventDisConn OnEventDisConnClientFunc,
 	OnEventPacket OnEventPacketClientFunc,
 	onParseProtoHead OnParseProtoHeadFunc,
@@ -54,7 +53,7 @@ func (p *Client) Connect(address string, rwBuffLen uint32, recvPacketMaxLen uint
 		p.tcpChan <- pes
 	}
 
-	p.Remote.start(conn, rwBuffLen, sendChanCapacity, recvPacketMaxLen, onParseProtoHead)
+	p.Remote.start(conn, sendChanCapacity, recvPacketMaxLen, onParseProtoHead)
 	return
 }
 

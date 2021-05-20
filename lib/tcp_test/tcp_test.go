@@ -152,14 +152,14 @@ func TestClient(t *testing.T) {
 	}()
 
 	address := "127.0.0.1:8787"
-	var rwBuffLen uint32 = 1000
+	//var rwBuffLen uint32 = 1000
 	var recvPacketMaxLen uint32 = 1000
 	var sendChanCapacity uint32 = 1000
 
 	//被动关闭, 由服务端关闭
 	if false {
 		var c tcp.Client
-		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+		err := c.Connect(address, recvPacketMaxLen,
 			eventChan, OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, sendChanCapacity)
 		if err != nil {
 			t.Fatalf("server start err:%v", err)
@@ -172,7 +172,7 @@ func TestClient(t *testing.T) {
 	//发送消息
 	if true {
 		var c tcp.Client
-		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+		err := c.Connect(address, recvPacketMaxLen,
 			eventChan, OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, sendChanCapacity)
 		if err != nil {
 			t.Fatalf("server start err:%v", err)
@@ -188,7 +188,7 @@ func TestClient(t *testing.T) {
 	//主动关闭
 	if true {
 		var c tcp.Client
-		err := c.Connect(address, rwBuffLen, recvPacketMaxLen,
+		err := c.Connect(address, recvPacketMaxLen,
 			eventChan, OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, sendChanCapacity)
 		if err != nil {
 			t.Fatalf("server start err:%v", err)

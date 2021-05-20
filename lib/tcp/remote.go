@@ -21,13 +21,12 @@ type Remote struct {
 	addEventPacket2EventChan  addEventPacket2EventChanFunc
 }
 
-func (p *Remote) start(conn *net.TCPConn,
-	rwBuffLen uint32, sendChanCapacity uint32, recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadFunc) {
+func (p *Remote) start(conn *net.TCPConn, sendChanCapacity uint32, recvPacketMaxLen uint32, onParseProtoHead OnParseProtoHeadFunc) {
 
 	p.conn = conn
 	p.conn.SetNoDelay(true)
-	p.conn.SetReadBuffer(int(rwBuffLen))
-	p.conn.SetWriteBuffer(int(rwBuffLen))
+	p.conn.SetReadBuffer(int(recvPacketMaxLen))
+	p.conn.SetWriteBuffer(int(recvPacketMaxLen))
 
 	p.sendChan = make(chan interface{}, sendChanCapacity)
 

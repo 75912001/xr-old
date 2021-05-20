@@ -12,12 +12,27 @@ func OnEventDisConnClient(client *tcp.Client) int {
 	if !client.IsConn() {
 		return 0
 	}
-	//TODO 业务逻辑
+	//login service
+	{
+		loginService := world.GLoginMgr.Find(client)
+		if loginService != nil {
+			world.GLoginMgr.DelService(loginService)
+			return 0
+		}
+	}
 	return 0
 }
 
 func OnEventPacketClient(client *tcp.Client, data []byte) int {
-	//TODO 业务逻辑
+	//login service
+	{
+		loginService := world.GLoginMgr.Find(client)
+		if loginService != nil {
+			//TODO 处理login消息
+			return 0
+		}
+	}
+
 	return 0
 }
 

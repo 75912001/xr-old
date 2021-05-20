@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"runtime"
 	"time"
 
@@ -22,22 +20,22 @@ func main() {
 		return
 	}
 
-	err = world.GMongodbMgr.Connect(world.GServer.BenchMgr.Json.DB.IP, world.GServer.BenchMgr.Json.DB.Port)
-	if err != nil {
-		log.Fatalf("mongodb connect err:%v", err)
-		return
-	}
+	//err = world.GMongodbMgr.Connect(world.GServer.BenchMgr.Json.DB.IP, world.GServer.BenchMgr.Json.DB.Port)
+	//if err != nil {
+	//	log.Fatalf("mongodb connect err:%v", err)
+	//	return
+	//}
 
 	defer func() {
 		world.GServer.Stop()
 	}()
-	go func() {
-		fmt.Println("pprof start...")
-		fmt.Println(http.ListenAndServe(":9876", nil))
-		for {
-			time.Sleep(time.Second)
-		}
-	}()
+	//go func() {
+	//	fmt.Println("pprof start...")
+	//	fmt.Println(http.ListenAndServe(":9876", nil))
+	//	for {
+	//		time.Sleep(time.Second)
+	//	}
+	//}()
 	for {
 		time.Sleep(time.Second)
 		log.Printf("goroutine cnt:%v", runtime.NumGoroutine())

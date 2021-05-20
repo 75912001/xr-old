@@ -48,7 +48,7 @@ func (p *UserMgr) DelUserId(uid type_define.USER_ID) {
 	delete(p.userIdMap, uid)
 }
 
-func (this *UserMgr) FindById(uid type_define.USER_ID) (user *User) {
-	user, _ = this.userIdMap[uid]
+func (p *UserMgr) FindById(uid type_define.USER_ID) (user *User) {
+	user, _ = p.userIdMap[uid]
 	return
 }
