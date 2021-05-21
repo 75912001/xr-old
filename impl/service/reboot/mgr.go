@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/75912001/xr/lib/bench"
+	"github.com/75912001/xr/impl/service/common/bench"
 	xrlog "github.com/75912001/xr/lib/log"
 	"github.com/75912001/xr/lib/timer"
 	"github.com/75912001/xr/lib/util"
