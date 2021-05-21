@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-
 	"github.com/75912001/xr/lib/addr"
 
 	"github.com/75912001/xr/lib/tcp"
@@ -67,7 +65,8 @@ func (p *Server) handleEvent() {
 				vv.Addr.OnEventAddrMulticast(vv.AddrJson.Name, vv.AddrJson.ID, vv.AddrJson.IP, vv.AddrJson.Port, vv.AddrJson.Data)
 			}
 		default:
-			p.Log.Crit(fmt.Sprintf("non-existent event:%v", v))
+			p.OnEventDefault(v)
+			//p.Log.Crit(fmt.Sprintf("non-existent event:%v", v))
 		}
 	}
 }

@@ -18,7 +18,7 @@ func main() {
 	var err error
 
 	err = world.GServer.Init(handle_event.OnEventConnServer, handle_event.OnEventDisConnServer, handle_event.OnEventPacketServer,
-		handle_event.OnParseProtoHeadServer, handle_event.OnEventAddrMulticast)
+		handle_event.OnParseProtoHeadServer, handle_event.OnEventAddrMulticast, handle_event.OnEventDefault)
 	if err != nil {
 		log.Fatalf("server init err:%v", err)
 		return

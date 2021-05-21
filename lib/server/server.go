@@ -20,21 +20,24 @@ import (
 )
 
 type Server struct {
-	Log        xrlog.Log
-	BenchMgr   bench.Mgr
-	TimerMgr   timer.TimerMgr
-	TcpService tcp.Server
-	Addr       addr.Addr
-	eventChan  chan interface{}
+	Log            xrlog.Log
+	BenchMgr       bench.Mgr
+	TimerMgr       timer.TimerMgr
+	TcpService     tcp.Server
+	Addr           addr.Addr
+	OnEventDefault tcp.OnEventDefaultFunc
+	eventChan      chan interface{}
 }
 
 func (p *Server) Init(onEventConnServerFunc tcp.OnEventConnServerFunc,
 	onEventDisConnServerFunc tcp.OnEventDisConnServerFunc,
 	onEventPacketServerFunc tcp.OnEventPacketServerFunc,
 	onParseProtoHeadFunc tcp.OnParseProtoHeadFunc,
-	onEventAddrMulticastFunc addr.OnEventAddrMulticastFunc) (err error) {
+	onEventAddrMulticastFunc addr.OnEventAddrMulticastFunc,
+	OnEventDefaultFunc tcp.OnEventDefaultFunc) (err error) {
 	log.Printf("service Init.")
 
+	p.OnEventDefault = OnEventDefaultFunc
 	rand.Seed(time.Now().UnixNano())
 
 	currentPath, err := util.GetCurrentPath()

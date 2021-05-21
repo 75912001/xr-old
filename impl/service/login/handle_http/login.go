@@ -3,11 +3,12 @@ package handle_http
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/75912001/xr/impl/service/protobuf/login_proto"
-	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/75912001/xr/impl/service/protobuf/login_proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/75912001/xr/lib/util"
 
@@ -120,6 +121,13 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 		session = util.GenMd5([]byte(verifyString))
 	}
 
+	{ //踢人
+		res := &login_proto.LoginKickMsgRes{
+			Platform: proto.Uint32(lj.Platform),
+			Account:  proto.String(newAccount),
+		}
+
+	}
 	{ //通知对应的服务器
 		res := new(login_proto.LoginMsgRes)
 		res.Platform = proto.Uint32(lj.Platform)

@@ -5,14 +5,26 @@ import (
 )
 
 type WorldServiceMgr struct {
-	client_mgr.ClientMgr
-
+	clientMgr client_mgr.ClientMgr
 }
 
 func (p *WorldServiceMgr) GetRandWorldService() (worldService *client_mgr.Client) {
-	for k, _ := range p.ClientMap {
-		worldService = p.Find(k)
+	for k, _ := range p.clientMgr.ClientMap {
+		worldService = p.clientMgr.Find(k)
 		break
 	}
 	return
+}
+
+func (p *WorldServiceMgr) Init() {
+	p.clientMgr.Init()
+}
+
+//数据包事件
+type LoginKickMsgRes struct {
+	Data []byte
+}
+
+type LoginMsgRes struct {
+	Data []byte
 }
