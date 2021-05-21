@@ -10,7 +10,7 @@ import (
 )
 
 func OnEventConnServer(remote *tcp.Remote) int {
-	_ = login.GWorldServiceMgr.AddUser(remote)
+	_ = login.GWorldMgr.Add(remote)
 	return 0
 }
 
@@ -18,11 +18,18 @@ func OnEventDisConnServer(remote *tcp.Remote) int {
 	if !remote.IsConn() {
 		return 0
 	}
-	login.GWorldServiceMgr.DelUser(remote)
+	world := login.GWorldMgr.Find(remote)
+	if nil == world {
+		login.GServer.Log.Error("find world err:", remote)
+		return 0
+	}
+	login.GWorldMgr.DelById(world.Id)
+	login.GWorldMgr.Del(remote)
 	return 0
 }
 
 func OnEventPacketServer(remote *tcp.Remote, data []byte) int {
+	//todo 处理world 发送来的注册消息
 	return 0
 }
 

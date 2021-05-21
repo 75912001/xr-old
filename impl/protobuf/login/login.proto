@@ -11,24 +11,18 @@ enum CMD
 {
     def = 0;
 	LOGIN_MSG = 0x50001;
-	LOGIN_KICK_MSG = 0x50002;
 }
 
 message login_msg//1,0x50001#world->login.上报提供服务的ip&&port.
 {
-	optional string ip = 1;
-	optional uint32 port = 2;
+	string ip = 1;
+	uint32 port = 2;
+	uint32 id = 3;//服务的id
 }
 
 message login_msg_res//login->world.发送登录信息
 {
-	optional uint32 platform = 1;//平台号
-	optional string account = 2;//帐号
-	optional string session = 3;//登录验证时使用的session
-}
-
-message login_kick_msg_res//login->world.踢人
-{
-	optional uint32 platform = 1;//平台号
-	optional string account = 2;//帐号
+	uint32 platform = 1;//平台号
+	string account = 2;//帐号
+	string session = 3;//登录验证时使用的session
 }

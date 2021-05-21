@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/75912001/xr/lib/util"
 	"log"
 	"runtime"
 	"time"
@@ -16,6 +17,10 @@ import (
 )
 
 func main() {
+	if !util.IsLittleEndian() {
+		log.Panicf("system is bigEndian!")
+	}
+
 	err := reboot.GRebootMgr.Init()
 	if err != nil {
 		log.Fatalf("rebootMgr init err:%v", err)

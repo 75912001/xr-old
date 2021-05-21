@@ -1,31 +1,31 @@
 package handle_event
 
 import (
-	"github.com/75912001/xr/impl/service/login/world_service"
+	"fmt"
+	"github.com/75912001/xr/impl/service/common/proto"
+	"github.com/75912001/xr/impl/service/common/proto_head"
+	"github.com/75912001/xr/impl/service/login"
+	"github.com/75912001/xr/impl/service/protobuf/login_proto"
 )
 
 func OnEventDefault(v interface{}) int {
-	//TODO 业务逻辑
-
 	switch v.(type) {
 	//server
-	case *world_service.LoginMsgRes:
-		vv, ok := v.(*world_service.LoginMsgRes)
+	case *LoginMsgRes:
+		vv, ok := v.(*LoginMsgRes)
 		if ok {
 			if !vv.Remote.IsConn() {
-				continue
+				break
 			}
-		}
-	case *world_service.LoginKickMsgRes:
-		vv, ok := v.(*world_service.LoginKickMsgRes)
-		if ok {
-			if !vv.Remote.IsConn() {
-				continue
+			err := proto.Send(vv.Remote, vv.Value.(*login_proto.LoginMsgRes),
+				proto_head.MessageID(login_proto.CMD_LOGIN_MSG), 0, 0, 0)
+			if err != nil {
+				login.GServer.Log.Error("send err:", err)
+				return 0
 			}
 		}
 	default:
-
-		//p.Log.Crit(fmt.Sprintf("non-existent event:%v", v))
+		login.GServer.Log.Crit(fmt.Sprintf("non-existent event:%v", v))
 	}
 
 	return 0

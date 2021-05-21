@@ -2,14 +2,14 @@ package login
 
 import (
 	"github.com/75912001/xr/impl/service/login/bench"
-	"github.com/75912001/xr/impl/service/login/world_service"
+	"github.com/75912001/xr/impl/service/login/world_mgr"
 	"github.com/75912001/xr/lib/server"
 )
 
 var GServer server.Server
 var GBench bench.Mgr
-var GWorldServiceMgr world_service.WorldServiceMgr
+var GWorldMgr world_mgr.WorldMgr
 
 func init() {
-	GWorldServiceMgr.Init()
+	GWorldMgr.Init()
 }

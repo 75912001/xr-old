@@ -20,7 +20,7 @@ type ResultID uint32
 type UserID uint64
 
 //GProtoHeadLength 包头长度
-var GProtoHeadLength uint32 = 24
+const GProtoHeadLength uint32 = 24
 
 //ProtoHead 协议包头
 type ProtoHead struct {

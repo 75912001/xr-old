@@ -15,6 +15,10 @@ import (
 )
 
 func main() {
+	if !util.IsLittleEndian() {
+		log.Panicf("system is bigEndian!")
+	}
+
 	var err error
 
 	err = world.GServer.Init(handle_event.OnEventConnServer, handle_event.OnEventDisConnServer, handle_event.OnEventPacketServer,

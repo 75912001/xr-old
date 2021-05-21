@@ -3,13 +3,12 @@ package handle_http
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/75912001/xr/impl/service/login/handle_event"
 	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/75912001/xr/impl/service/protobuf/login_proto"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/75912001/xr/lib/util"
 
 	"github.com/75912001/xr/impl/service/login"
@@ -100,7 +99,7 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	worldService := login.GWorldServiceMgr.GetRandWorldService()
+	worldService := login.GWorldMgr.GetWorldService(lj.Platform, newAccount)
 	if worldService == nil {
 		login.GServer.Log.Error("LoginHttpHandler worldService empty")
 		gj.ErrorCode = 1
@@ -121,26 +120,21 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 		session = util.GenMd5([]byte(verifyString))
 	}
 
-	{ //踢人
-		res := &login_proto.LoginKickMsgRes{
-			Platform: proto.Uint32(lj.Platform),
-			Account:  proto.String(newAccount),
-		}
-
-	}
 	{ //通知对应的服务器
-		res := new(login_proto.LoginMsgRes)
-		res.Platform = proto.Uint32(lj.Platform)
-		res.Account = proto.String(newAccount)
-		res.Session = proto.String(session)
+		res := &login_proto.LoginMsgRes{
+			Platform: lj.Platform,
+			Account:  newAccount,
+			Session:  session,
+		}
+		v := &handle_event.LoginMsgRes{
+			Value:  res,
+			Remote: worldService.Remote,
+		}
+		login.GServer.Push2EventChan(v)
 
-		//ztcp.Lock()
-		//TODO 发送数据时, chan 如果为close/nil 状态, 会有不同的pinc/blocking...
-		//peerConn.Send(res, ztcp.MESSAGE_ID(loginserv_msg.CMD_LOGIN_MSG), 0, 0, 0)
-
+		//返回http消息
 		gj.Ip = worldService.IP
 		gj.Port = worldService.Port
 		gj.Session = session
-		//ztcp.UnLock()
 	}
 }

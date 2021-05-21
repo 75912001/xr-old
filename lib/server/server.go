@@ -129,3 +129,7 @@ func (p *Server) Stop() (err error) {
 func (p *Server) GetEventChan() (eventChan chan<- interface{}) {
 	return p.eventChan
 }
+
+func (p *Server) Push2EventChan(v interface{}) {
+	p.eventChan <- v
+}
