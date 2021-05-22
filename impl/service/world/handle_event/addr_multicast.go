@@ -2,6 +2,9 @@ package handle_event
 
 import (
 	"fmt"
+	"github.com/75912001/xr/impl/service/common/proto"
+	"github.com/75912001/xr/impl/service/common/proto_head"
+	"github.com/75912001/xr/impl/service/protobuf/login_proto"
 
 	"github.com/75912001/xr/impl/service/common"
 	"github.com/75912001/xr/impl/service/common/service_mgr"
@@ -26,6 +29,14 @@ func OnEventAddrMulticast(name string, id uint32, ip string, port uint16, data s
 			return 0
 		}
 		world.GLoginMgr.AddService(&service)
+		{
+			req := &login_proto.LoginMsg{
+				Ip:   world.GServer.BenchMgr.Json.Server.IP,
+				Port: uint32(world.GServer.BenchMgr.Json.Server.Port),
+				Id:   world.GServer.BenchMgr.Json.Base.ServiceID,
+			}
+			proto.Send(&service.Client.Remote, req, proto_head.MessageID(login_proto.CMD_LOGIN_MSG), 0, 0, 0)
+		}
 		return 0
 	case common.MONGODB_NAME:
 		return 0

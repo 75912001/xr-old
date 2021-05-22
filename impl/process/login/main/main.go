@@ -18,7 +18,7 @@ import (
 
 func main() {
 	if !util.IsLittleEndian() {
-		log.Panicf("system is bigEndian!")
+		log.Fatalf("system is bigEndian!")
 	}
 
 	var err error

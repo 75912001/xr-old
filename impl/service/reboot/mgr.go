@@ -80,13 +80,13 @@ func (p *RebootMgr) Init() (err error) {
 		currentPath, err := util.GetCurrentPath()
 		if err != nil {
 			p.Log.Crit("GetCurrentPath fatal:", err)
-			return
+			return err
 		}
 		{
 			err = util.UnmarshalJsonFile(path.Join(currentPath, "bench.json"), &GBench.Json)
 			if err != nil {
 				p.Log.Crit("parse bench.json err:", err)
-				return
+				return err
 			}
 			p.Log.Info(fmt.Sprintf("bench json:%+v", GBench.Json))
 		}

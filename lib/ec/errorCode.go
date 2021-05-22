@@ -19,6 +19,9 @@ const (
 	ECInvPointer
 	ECUnknown
 	ECNonExistent
+	ECPBMessageIdExistent
+	ECPBMessageIdNonExistent
+	ECPBUnmarshal
 	ECMAX
 	//0xff
 )
@@ -41,21 +44,24 @@ func (p *errorInfo) getDetail() string {
 }
 
 var errorInformation = []errorInfo{
-	ECSucess:      {ECSucess, "ECSucess", "sucess"},
-	ECLink:        {ECLink, "ECLink", "link error"},
-	ECSYS:         {ECSYS, "ECSYS", "system error"},
-	ECParam:       {ECParam, "ECParam", "parameter error"},
-	ECPacket:      {ECPacket, "ECPacket", "data pack error"},
-	ECTimeOut:     {ECTimeOut, "ECTimeOut", "time out"},
-	ECChanFull:    {ECChanFull, "ECChanFull", "chan full"},
-	ECChanEmpty:   {ECChanEmpty, "ECChanEmpty", "chan empty"},
-	ECOutOfRange:  {ECOutOfRange, "ECOutOfRange", "value out of range"},
-	ECInvValue:    {ECInvValue, "ECInvValue", "invalid value"},
-	ECConflict:    {ECConflict, "ECConflict", "conflict"},
-	ECType:        {ECType, "ECType", "type mismatch"},
-	ECInvPointer:  {ECInvPointer, "ECInvPointer", "invalid pointer"},
-	ECUnknown:     {ECUnknown, "ECUnknown", "Unknown"},
-	ECNonExistent: {ECNonExistent, "ECNonExistent", "non-existent"},
+	ECSucess:                 {ECSucess, "ECSucess", "sucess"},
+	ECLink:                   {ECLink, "ECLink", "link error"},
+	ECSYS:                    {ECSYS, "ECSYS", "system error"},
+	ECParam:                  {ECParam, "ECParam", "parameter error"},
+	ECPacket:                 {ECPacket, "ECPacket", "data pack error"},
+	ECTimeOut:                {ECTimeOut, "ECTimeOut", "time out"},
+	ECChanFull:               {ECChanFull, "ECChanFull", "chan full"},
+	ECChanEmpty:              {ECChanEmpty, "ECChanEmpty", "chan empty"},
+	ECOutOfRange:             {ECOutOfRange, "ECOutOfRange", "value out of range"},
+	ECInvValue:               {ECInvValue, "ECInvValue", "invalid value"},
+	ECConflict:               {ECConflict, "ECConflict", "conflict"},
+	ECType:                   {ECType, "ECType", "type mismatch"},
+	ECInvPointer:             {ECInvPointer, "ECInvPointer", "invalid pointer"},
+	ECUnknown:                {ECUnknown, "ECUnknown", "Unknown"},
+	ECNonExistent:            {ECNonExistent, "ECNonExistent", "non-existent"},
+	ECPBMessageIdExistent:    {ECPBMessageIdExistent, "ECPBMessageIdExistent", "message id existent"},
+	ECPBMessageIdNonExistent: {ECPBMessageIdNonExistent, "ECPBMessageIdNonExistent", "message id non-existent"},
+	ECPBUnmarshal:            {ECPBUnmarshal, "ECPBUnmarshal", "message id unmarshal"},
 }
 
 func init() {

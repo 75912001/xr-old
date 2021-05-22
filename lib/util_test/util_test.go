@@ -17,3 +17,11 @@ func TestGetCurrentPath(t *testing.T) {
 	}
 	t.Logf("CurrentPath:%v", currentPath)
 }
+
+func TestIsLittleEndian(t *testing.T) {
+	if util.IsLittleEndian() {
+		t.Logf("littleEndian")
+	} else {
+		t.Logf("bigEndian")
+	}
+}

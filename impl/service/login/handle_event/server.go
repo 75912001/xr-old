@@ -29,7 +29,15 @@ func OnEventDisConnServer(remote *tcp.Remote) int {
 }
 
 func OnEventPacketServer(remote *tcp.Remote, data []byte) int {
-	//todo 处理world 发送来的注册消息
+	world := login.GWorldMgr.Find(remote)
+	if world == nil {
+		login.GServer.Log.Crit("OnEventPacketServer remote err.")
+		return 0
+	}
+
+	var ph proto_head.ProtoHead
+	ph.PacketLength, ph.MessageID, ph.SessionID, ph.ResultID, ph.UserID = proto_head.GetProtoHead(data)
+	login.GPbFunMgr.OnRecv(uint32(ph.MessageID), ph, data[proto_head.GProtoHeadLength:], world)
 	return 0
 }
 
