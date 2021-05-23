@@ -97,7 +97,8 @@ func (p *Addr) handleAddrMulticast(data []byte) (err error) {
 		return
 	}
 	//判断 名称 && id 不等
-	if p.selfAddr.Name != aj.Name && p.selfAddr.ID != aj.ID {
+	if p.selfAddr.Name == aj.Name && p.selfAddr.ID == aj.ID {
+	} else {
 		if 0 == aj.Cmd {
 			p.multicast.doAddrSYN([]byte(p.addrBuffer))
 			p.add(aj.Name, aj.ID, &aj)

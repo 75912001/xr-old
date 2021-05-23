@@ -53,16 +53,17 @@ func main() {
 	}
 
 	//HTTP 登录服务
-	{
+	go func() {
 		http.HandleFunc(login.GBench.Json.LoginHttp.Pattern, handle_http.LoginHttpHandler)
 		//http 服务开始
 		httpAddr := fmt.Sprintf("%v:%v", login.GBench.Json.LoginHttp.IP, login.GBench.Json.LoginHttp.Port)
 		err = http.ListenAndServe(httpAddr, nil)
 		if nil != err {
 			login.GServer.Log.Crit("ListenAndServe err: ", err, httpAddr)
+			log.Fatalf("ListenAndServe err:%v, %v", err, httpAddr)
 			return
 		}
-	}
+	}()
 
 	defer func() {
 		login.GServer.Stop()

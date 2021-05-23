@@ -6,6 +6,6 @@ import (
 )
 
 type Service struct {
-	addrJson addr.AddrJson
+	AddrJson addr.AddrJson
 	Client   tcp.Client
 }

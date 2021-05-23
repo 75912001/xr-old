@@ -5,6 +5,8 @@ import (
 	"github.com/75912001/xr/impl/service/common/proto"
 	"github.com/75912001/xr/impl/service/common/proto_head"
 	"github.com/75912001/xr/impl/service/protobuf/login_proto"
+	"github.com/75912001/xr/lib/addr"
+	"github.com/75912001/xr/lib/tcp"
 
 	"github.com/75912001/xr/impl/service/common"
 	"github.com/75912001/xr/impl/service/common/service_mgr"
@@ -20,7 +22,17 @@ func OnEventAddrMulticast(name string, id uint32, ip string, port uint16, data s
 		}
 		address := fmt.Sprintf("%v:%v", ip, port)
 		j := &world.GServer.BenchMgr.Json
-		var service service_mgr.Service
+		service := &service_mgr.Service{
+			AddrJson: addr.AddrJson{
+				Name: name,
+				ID:   id,
+				IP:   ip,
+				Port: port,
+				Data: data,
+			},
+			Client: tcp.Client{},
+		}
+
 		err := service.Client.Connect(address, j.Base.PacketLengthMax, world.GServer.GetEventChan(),
 			OnEventDisConnClient, OnEventPacketClient, OnParseProtoHeadClient, j.Base.SendChanCapacity)
 		if err != nil {
@@ -28,7 +40,7 @@ func OnEventAddrMulticast(name string, id uint32, ip string, port uint16, data s
 				err, name, id, ip, port, data))
 			return 0
 		}
-		world.GLoginMgr.AddService(&service)
+		world.GLoginMgr.AddService(service)
 		{
 			req := &login_proto.LoginMsg{
 				Ip:   world.GServer.BenchMgr.Json.Server.IP,

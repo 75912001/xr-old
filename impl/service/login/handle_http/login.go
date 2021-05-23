@@ -105,7 +105,6 @@ func LoginHttpHandler(w http.ResponseWriter, req *http.Request) {
 		gj.ErrorCode = 1
 		return
 	}
-
 	//////////////////////////////////////////////////////////////////////
 	var session string
 	{ //检查签名,生成session

@@ -35,7 +35,7 @@ func OnEventPacketServer(remote *tcp.Remote, data []byte) int {
 		return 0
 	}
 
-	var ph proto_head.ProtoHead
+	ph := &proto_head.ProtoHead{}
 	ph.PacketLength, ph.MessageID, ph.SessionID, ph.ResultID, ph.UserID = proto_head.GetProtoHead(data)
 	login.GPbFunMgr.OnRecv(uint32(ph.MessageID), ph, data[proto_head.GProtoHeadLength:], world)
 	return 0

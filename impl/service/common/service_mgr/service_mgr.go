@@ -19,13 +19,13 @@ func (p *ServiceMgr) Init() {
 
 func (p *ServiceMgr) AddService(service *Service) {
 	p.serviceMap[&service.Client] = service
-	p.serviceIDMap[service.addrJson.ID] = service
+	p.serviceIDMap[service.AddrJson.ID] = service
 	return
 }
 
 func (p *ServiceMgr) DelService(service *Service) {
 	delete(p.serviceMap, &service.Client)
-	delete(p.serviceIDMap, service.addrJson.ID)
+	delete(p.serviceIDMap, service.AddrJson.ID)
 }
 
 func (p *ServiceMgr) Find(client *tcp.Client) (service *Service) {

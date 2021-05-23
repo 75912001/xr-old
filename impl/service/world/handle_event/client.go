@@ -2,7 +2,6 @@ package handle_event
 
 import (
 	"fmt"
-
 	"github.com/75912001/xr/impl/service/common/proto_head"
 	"github.com/75912001/xr/impl/service/world"
 	"github.com/75912001/xr/lib/tcp"
@@ -28,7 +27,9 @@ func OnEventPacketClient(client *tcp.Client, data []byte) int {
 	{
 		loginService := world.GLoginMgr.Find(client)
 		if loginService != nil {
-			//TODO 处理login消息
+			ph := &proto_head.ProtoHead{}
+			ph.PacketLength, ph.MessageID, ph.SessionID, ph.ResultID, ph.UserID = proto_head.GetProtoHead(data)
+			world.GPbLoginFunMgr.OnRecv(uint32(ph.MessageID), ph, data[proto_head.GProtoHeadLength:], loginService)
 			return 0
 		}
 	}
